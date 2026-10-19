@@ -61,9 +61,6 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
             general.shuangpin_raw_preedit,
             false,
         )?);
-        if Feature::KeyHint.here() {
-            rows.extend(key_hint(ui, page)?);
-        }
     }
     let wubi = general.wubi();
     let switch = Switch::new(wubi).build(
@@ -78,6 +75,9 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
             .control(switch)
             .build(ui, theme)?,
     );
+    if (scheme.is_shuangpin() || wubi) && Feature::KeyHint.here() {
+        rows.extend(key_hint(ui, page)?);
+    }
     out.push(section_title(ui, theme, "方案")?);
     out.push(group(ui, theme, &rows)?);
 
@@ -93,7 +93,7 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
     Ok(out)
 }
 
-/// 双拼键位提示：什么时候弹出、键盘大小、窗口透明度（关着时后两项不能调）。
+/// 键位提示（双拼键位、五笔字根图）：什么时候弹出、键盘大小、窗口透明度（关着时后两项不能调）。
 fn key_hint(ui: &mut Ui<Message>, page: &Page) -> Result<[NodeId; 3], RenderError> {
     let theme = &page.theme;
     let general = &page.settings.config.general;
@@ -107,7 +107,7 @@ fn key_hint(ui: &mut Ui<Message>, page: &Page) -> Result<[NodeId; 3], RenderErro
         false,
     )?;
     let mode = SettingRow::new("键位提示")
-        .info("候选窗口旁显示键盘，敲了声母后标出能接的韵母键")
+        .info("候选窗口旁显示键盘：双拼敲了声母后标出能接的韵母键，五笔显示字根图")
         .control(control)
         .build(ui, theme)?;
     let off = general.key_hint == KeyHintMode::Off;
