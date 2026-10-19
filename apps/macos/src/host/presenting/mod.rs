@@ -122,7 +122,7 @@ impl Host {
                         cloud: false,
                     };
                 };
-                let mut row = Row::from_candidate(offset, candidate);
+                let mut row = Row::from_candidate(offset, candidate, self.translation_pos);
                 row.index = index;
                 row.cloud = candidate.kind == CandidateKind::Cloud;
                 row

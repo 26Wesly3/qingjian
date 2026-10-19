@@ -140,6 +140,9 @@ pub struct Host {
     /// 组句中的拼音显示在行内、候选窗口还是两处。
     pub preedit_mode: PreeditMode,
 
+    /// 译词旁是否画词性（配置 `[general] translation_pos`）。
+    pub translation_pos: bool,
+
     /// 候选窗口竖排 / 横排（配置 `[general] layout`）。
     pub layout: LayoutMode,
 

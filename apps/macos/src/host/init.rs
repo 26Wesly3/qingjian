@@ -153,6 +153,7 @@ pub fn init(mtm: MainThreadMarker, info: &BundleInfo) -> Result<(), HostError> {
             translation: None,
             notice: None,
             preedit_mode: PreeditMode::default(),
+            translation_pos: true,
             layout: LayoutMode::default(),
             horizontal_grid: false,
             highlight_keys: HighlightKeys::default(),

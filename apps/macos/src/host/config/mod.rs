@@ -48,6 +48,7 @@ impl Host {
         self.highlight_keys = config.shortcut.highlight_keys;
         self.punct_commits = config.general.punct_commits;
         self.preedit_mode = config.general.preedit;
+        self.translation_pos = config.general.translation_pos;
         self.english_candidates = config.general.english_candidates;
         self.apps = config.apps.clone();
         self.window.set_appearance(config.general.appearance());

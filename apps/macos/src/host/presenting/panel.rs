@@ -38,7 +38,7 @@ impl Host {
             .iter()
             .map(|cell| match cell.candidate() {
                 Some(candidate) => {
-                    let mut row = Row::from_candidate(0, candidate);
+                    let mut row = Row::from_candidate(0, candidate, self.translation_pos);
                     row.index = String::new();
                     row
                 }

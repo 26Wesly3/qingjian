@@ -49,7 +49,7 @@ pub fn candidates(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, Rend
         150.0,
         false,
     )?;
-    let mut rows = vec![
+    let rows = vec![
         SettingRow::new("每页候选数")
             .control(stepper)
             .build(ui, theme)?,
@@ -61,21 +61,18 @@ pub fn candidates(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, Rend
             .info("只换字形、不换用语（软件 → 軟件）；台湾与香港的字形取舍不同（裡 / 裏）")
             .control(traditional)
             .build(ui, theme)?,
+        toggle_info(
+            ui,
+            page,
+            "译词显示词性",
+            Some(
+                "关掉后候选旁只显示译词，不显示 v. / n. / adj. 等标注（如 develop 而非 v. develop）",
+            ),
+            ("general", "translation_pos"),
+            general.translation_pos,
+            general.learning_language_off(),
+        )?,
     ];
-    // 词性标注的接线目前只有 Windows 候选窗（#430）与 Linux Fcitx5 面板；macOS 候选行接上后再放开
-    if cfg!(any(target_os = "windows", target_os = "linux")) {
-        rows.push(
-            toggle_info(
-                ui,
-                page,
-                "译词显示词性",
-                Some("关掉后候选旁只显示译词，不显示 v. / n. / adj. 等标注（如 develop 而非 v. develop）"),
-                ("general", "translation_pos"),
-                general.translation_pos,
-                general.learning_language_off(),
-            )?,
-        );
-    }
     out.push(section_title(ui, theme, "显示")?);
     out.push(group(ui, theme, &rows)?);
 
