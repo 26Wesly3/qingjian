@@ -154,6 +154,7 @@ pub fn init(mtm: MainThreadMarker, info: &BundleInfo) -> Result<(), HostError> {
             notice: None,
             key_hint_mode: KeyHintMode::default(),
             key_hint: KeyHintState::default(),
+            root_keyboard: None,
             preedit_mode: PreeditMode::default(),
             translation_pos: true,
             layout: LayoutMode::default(),

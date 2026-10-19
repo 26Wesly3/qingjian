@@ -144,6 +144,9 @@ pub struct Host {
     /// 「卡住时显示」的停顿计时与这一段组句里弹没弹过。
     key_hint: KeyHintState,
 
+    /// 五笔字根图换成的键盘，第一次画时建好（字形解析一次）。
+    root_keyboard: Option<qingjian_render::Keyboard>,
+
     /// 组句中的拼音显示在行内、候选窗口还是两处。
     pub preedit_mode: PreeditMode,
 
