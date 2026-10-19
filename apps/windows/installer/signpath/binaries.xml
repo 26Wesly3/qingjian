@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SignPath 第一轮：Inno 打包前签青简自己编出的五个 PE（release.yml 的 windows job 上传的 target\ 子集，路径相对 target\）。
+     自包含的 Windows App Runtime 是上游二进制，不送签。改了这里要同步粘到 SignPath 项目的 artifact configuration「binaries」。 -->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <zip-file>
+    <pe-file path="release/qingjian-server.exe" product-name="青简">
+      <authenticode-sign />
+    </pe-file>
+    <pe-file path="release/qingjian-settings.exe" product-name="青简">
+      <authenticode-sign />
+    </pe-file>
+    <pe-file path="release/qingjian-settings-legacy.exe" product-name="青简">
+      <authenticode-sign />
+    </pe-file>
+    <pe-file path="release/qingjian_tsf.dll" product-name="青简">
+      <authenticode-sign />
+    </pe-file>
+    <pe-file path="i686-pc-windows-msvc/release/qingjian_tsf.dll" product-name="青简">
+      <authenticode-sign />
+    </pe-file>
+  </zip-file>
+</artifact-configuration>

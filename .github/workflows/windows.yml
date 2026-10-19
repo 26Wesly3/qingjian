@@ -1,0 +1,196 @@
+# Windows 安装包：构建 → SignPath 签五个 PE → Inno 打包 → 再签安装包（Inno 的安装包 SignPath 解不开，只能两轮）。
+# release.yml 的 windows job 调它，把安装包传到草稿 Release；也能在 Actions 页手动跑，安装包挂在那次运行的 Artifacts 里。
+# 签名走 SignPath Foundation 的开源计划（项目 qingjian），两份 artifact configuration 的原文在 apps/windows/installer/signpath/；
+# 每轮签名都要有人在 SignPath 网页上批准，job 最多等两小时。签名策略：
+#   test-signing     SignPath 的测试证书，系统不信任，只验流程；装测试包要先把测试根证书导进「受信任的根证书颁发机构」，
+#                    否则带 uiAccess 的 Server 起不来
+#   release-signing  SignPath Foundation 的正式证书
+#   none             不签名、关 uiAccess（候选窗在商店 / 任务栏搜索里可能被盖住）
+# 需要：
+#   SIGNPATH_API_TOKEN         （Secret）CI 用户的 API token，在签名策略上是 Submitter
+#   SIGNPATH_ORGANIZATION_ID   （Variable）SignPath 组织 ID
+name: windows
+
+on:
+  workflow_call:
+    inputs:
+      signing-policy:
+        type: string
+        required: true
+      release:
+        description: 把安装包传到本次标签的草稿 Release
+        type: boolean
+        default: false
+      version:
+        description: 发版的版本号（release 为 true 时用）
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      signing-policy:
+        type: choice
+        options: [test-signing, release-signing, none]
+        default: test-signing
+  push:
+    branches: [feat/signpath]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  package:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      # SignPath 从本次运行的 Artifacts 下载待签文件
+      actions: read
+    defaults:
+      run:
+        shell: bash
+    env:
+      POLICY: ${{ inputs.signing-policy || 'test-signing' }}
+      PYTHON: python
+      # Windows 上 Python 的标准输出缺省 cp1252，中文更新日志会编码失败。
+      PYTHONUTF8: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # v1
+        with:
+          toolchain: 1.96.0
+          # 安装包另带一份 32 位 TSF DLL（build.ps1 编）
+          targets: i686-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+
+      - name: Fetch product data
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tools/release/data-fetch.sh
+          ls -la data/generated data/generated/dicts data/models/hanzhang-zhiwei data/models/hanzhang-tongbian
+
+      # 与开发机同版本（7.1.0，自带简体中文翻译；Chocolatey 只有 6.x，6 的安装包不带简中）。钉死 GitHub Release 上的文件。
+      - name: Install Inno Setup 7.1.0
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe'
+          # 下载来的安装程序要以管理员身份执行，先核对 SHA-256（2026-09-11 从上面地址下载后算出），对不上就不装。
+          $expected = '0362a383ed217d4c4239b5933866dd96d3eb2102737da92f80f6057a4b40df2f'
+          $exe = Join-Path $env:RUNNER_TEMP 'innosetup.exe'
+          Invoke-WebRequest -Uri $url -OutFile $exe
+          $actual = (Get-FileHash -Path $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Inno Setup 安装程序 SHA-256 不符：$actual" }
+          Start-Process -FilePath $exe -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/SP-' -Wait
+          & "${env:ProgramFiles}\Inno Setup 7\ISCC.exe" --version
+
+      # 签名的包开 uiAccess（候选窗才能盖过商店 / 任务栏搜索）；没签名的 exe 带 uiAccess 起不来，所以不签就关
+      - name: Build binaries
+        shell: pwsh
+        run: |
+          $flags = @('-BuildOnly')
+          if ($env:POLICY -ne 'none') { $flags += '-UiAccess' }
+          powershell -NoProfile -ExecutionPolicy Bypass -File apps\windows\installer\build.ps1 @flags
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # 路径要与 apps/windows/installer/signpath/binaries.xml 一致（压缩包里相对 target/）
+      - name: Upload unsigned binaries
+        id: unsigned-binaries
+        if: env.POLICY != 'none'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-binaries
+          if-no-files-found: error
+          retention-days: 1
+          path: |
+            target/release/qingjian-server.exe
+            target/release/qingjian-settings.exe
+            target/release/qingjian-settings-legacy.exe
+            target/release/qingjian_tsf.dll
+            target/i686-pc-windows-msvc/release/qingjian_tsf.dll
+
+      - name: Sign binaries
+        if: env.POLICY != 'none'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: qingjian
+          signing-policy-slug: ${{ env.POLICY }}
+          artifact-configuration-slug: binaries
+          github-artifact-id: ${{ steps.unsigned-binaries.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: ${{ runner.temp }}/signed-binaries
+
+      - name: Put signed binaries back
+        if: env.POLICY != 'none'
+        run: cp -R "$RUNNER_TEMP/signed-binaries/." target/
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -File apps\windows\installer\build.ps1 -SkipBuild
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload unsigned installer
+        id: unsigned-installer
+        if: env.POLICY != 'none'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: unsigned-installer
+          if-no-files-found: error
+          retention-days: 1
+          path: target/installer/*.exe
+
+      - name: Sign installer
+        if: env.POLICY != 'none'
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: qingjian
+          signing-policy-slug: ${{ env.POLICY }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.unsigned-installer.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: ${{ runner.temp }}/signed-installer
+
+      - name: Put signed installer back
+        if: env.POLICY != 'none'
+        run: cp "$RUNNER_TEMP"/signed-installer/*.exe target/installer/
+
+      # 签名是否到位：每个送签的文件都要有有效的 Authenticode 签名（测试证书不受信任，状态是 UnknownError，只查有签名）
+      - name: Check signatures
+        if: env.POLICY != 'none'
+        shell: pwsh
+        run: |
+          $files = @(
+            'target\release\qingjian-server.exe',
+            'target\release\qingjian-settings.exe',
+            'target\release\qingjian-settings-legacy.exe',
+            'target\release\qingjian_tsf.dll',
+            'target\i686-pc-windows-msvc\release\qingjian_tsf.dll'
+          ) + (Get-ChildItem target\installer\*.exe).FullName
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature $file
+            Write-Host "$($signature.Status)  $($signature.SignerCertificate.Subject)  $file"
+            if (-not $signature.SignerCertificate) { throw "$file 没有签名" }
+          }
+
+      - name: Upload installer
+        if: ${{ !inputs.release }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installer-${{ env.POLICY }}
+          if-no-files-found: error
+          path: target/installer/*.exe
+
+      - name: Upload to draft release
+        if: inputs.release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: tools/release/upload-build.sh windows "$(powershell -NoProfile -Command '(Get-CimInstance Win32_OperatingSystem).Caption' | tr -d '\r')" target/installer/*.exe

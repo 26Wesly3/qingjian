@@ -3594,7 +3594,7 @@ dependencies = [
 
 [[package]]
 name = "qingjian-settings"
-version = "0.2.1-dev"
+version = "0.2.2-dev"
 dependencies = [
  "bamboo-slip",
  "cosmic-text",
@@ -3704,6 +3704,7 @@ dependencies = [
  "windows",
  "windows-core 0.62.2",
  "windows-registry",
+ "winresource",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@
 //! **没签名的 exe 带 uiAccess=true 会直接起不来**（「从服务器返回了一个参照」），所以缺省不带，签过名的构建才设
 //! `QINGJIAN_UIACCESS=1` 打开（`build.ps1 -Sign`）；不带的代价是候选窗在 UWP 宿主里可能被盖住（用户文档已列为已知问题）。
 //! manifest 缺省含 PerMonitorV2 DPI 感知，与运行时那次 `SetProcessDpiAwarenessContext` 一致。
-//! 另把青简图标嵌进 exe（任务管理器 / 启动项里显示）。
+//! 另把青简图标与版本信息嵌进 exe（任务管理器 / 启动项里显示；代码签名要求每个被签的文件带产品名与版本号）。
 
 use embed_manifest::manifest::ExecutionLevel;
 use embed_manifest::{embed_manifest, new_manifest};
@@ -32,7 +32,12 @@ fn main() {
 fn embed_icon() {
     const ICON: &str = "../tsf/resources/qingjian.ico";
     println!("cargo:rerun-if-changed={ICON}");
-    if let Err(error) = winresource::WindowsResource::new().set_icon(ICON).compile() {
+    if let Err(error) = winresource::WindowsResource::new()
+        .set_icon(ICON)
+        .set("ProductName", "青简")
+        .set("FileDescription", "青简输入法")
+        .compile()
+    {
         println!("cargo:warning=嵌入 Server 图标失败: {error}");
     }
 }

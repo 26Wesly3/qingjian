@@ -22,6 +22,9 @@ qingjian-windows-server = { path = "../server" }
 [lints]
 workspace = true
 
+[target."cfg(windows)".build-dependencies]
+winresource = "0.1.31"
+
 [target."cfg(windows)".dependencies]
 windows-registry.workspace = true
 # `#[implement]` 宏展开引用 `::windows_core`，要直接依赖

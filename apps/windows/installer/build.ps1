@@ -9,16 +9,21 @@
       4) iscc /DAppVersion=<版本> 编脚本，成品在 target\installer\qingjian-<版本>-windows-x86_64-setup.exe。
     随包数据（.qj / .tsv）直接由 .iss 从仓库 data\generated 与 assets 里取，不另建暂存目录；
     确保打包前 data\generated 里的 .qj 是最新的（bundle 流程见仓库 CLAUDE.md）。
-    uiAccess 跟着 -Sign 走，不用手设 QINGJIAN_UIACCESS（见 -Sign）。
+    uiAccess 跟着 -Sign / -UiAccess 走，不用手设 QINGJIAN_UIACCESS。
+    CI 走 SignPath 签名时分两次跑（release.yml）：先 -BuildOnly 出二进制送签，签好的放回原处再 -SkipBuild 打包。
 .PARAMETER SkipBuild
-    跳过 cargo build（数据或 .iss 改了、二进制没变时重编安装包用）。
+    跳过 cargo build（数据或 .iss 改了、二进制没变时重编安装包用；CI 签完名的二进制也这样打包）。
+.PARAMETER BuildOnly
+    只构建、铺好自包含运行时，不打安装包（CI 先把二进制送去签名）。
+.PARAMETER UiAccess
+    开 uiAccess 但不自签：二进制随后由 CI 送 SignPath 签名。
 .PARAMETER Sign
     自签产物（sign-local.ps1）并开 uiAccess（候选窗才能盖过商店 / 任务栏搜索）。uiAccess=true 的 exe 要本机受信任的签名
     才准启动，自签证书只有编译机信任——所以 -Sign 只用于本机真机测，对外分发的包不加此开关：不签名、关 uiAccess，
     候选窗在那几个系统界面里会被盖住，但任何机器都能起。
 #>
 [CmdletBinding()]
-param([switch]$SkipBuild, [switch]$Sign)
+param([switch]$SkipBuild, [switch]$BuildOnly, [switch]$Sign, [switch]$UiAccess)
 
 $ErrorActionPreference = 'Stop'
 
@@ -26,10 +31,12 @@ $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 $Iss  = Join-Path $PSScriptRoot 'qingjian.iss'
 
-# uiAccess 跟着 -Sign 走（server\build.rs 读这个变量，改了会自动重编 Server）；理由见 -Sign 的说明。
-$env:QINGJIAN_UIACCESS = if ($Sign) { '1' } else { '0' }
+# uiAccess 跟着 -Sign / -UiAccess 走（server\build.rs 读这个变量，改了会自动重编 Server）；理由见 -Sign 的说明。
+$env:QINGJIAN_UIACCESS = if ($Sign -or $UiAccess) { '1' } else { '0' }
 if ($Sign) {
     Write-Host 'uiAccess=1（-Sign：仅本机真机测，别用于对外分发）' -ForegroundColor Yellow
+} elseif ($UiAccess) {
+    Write-Host 'uiAccess=1（-UiAccess：二进制要由 SignPath 签名后再打包）' -ForegroundColor Yellow
 } else {
     Write-Host 'uiAccess=0（对外分发：Server 任何机器都能起；候选窗在商店 / 任务栏搜索里可能被盖）' -ForegroundColor Cyan
 }
@@ -80,6 +87,7 @@ foreach ($name in $wanted) {
 # 缺文件说明自包含运行时没铺成功（build.rs 下载 NuGet 或解 MSIX 失败），早报错，别打出个跑不起来的包。
 if ($missing.Count -gt 0) { throw "自包含 Windows App Runtime 缺 $($missing.Count) 项：$($missing -join ', ')" }
 Write-Host "自包含运行时 $($wanted.Count) 项 → target\installer\settings-runtime" -ForegroundColor Cyan
+if ($BuildOnly) { return }
 
 # 1.5) 签名（必须在 iscc 打包前：Inno 把已签的文件原样拷进安装包）。
 if ($Sign) {

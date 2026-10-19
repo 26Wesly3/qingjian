@@ -9,7 +9,7 @@
 
 0.1.4 起三个平台共用版本号、共用一个 GitHub Release（标签 `v<版本>`）：同一个版本号、同一份更新日志只出现一次，三个平台的安装包都挂在上面。
 
-1. 改版本号，把 `-dev` 去掉：`apps/macos/Cargo.toml`（Info.plist 与 pkg 文件名从这里取）、`apps/windows/{server,tsf,settings}/Cargo.toml`（三个一起改，打包读 `server`）、
+1. 改版本号，把 `-dev` 去掉：`apps/macos/Cargo.toml`（Info.plist 与 pkg 文件名从这里取）、`apps/windows/{server,tsf,settings}/Cargo.toml`（三个一起改，打包读 `server`）、`apps/settings/Cargo.toml`（三平台共用的设置程序）、
    `apps/linux/server/Cargo.toml`，然后 `cargo update --workspace --offline` 同步 `Cargo.lock`。
    **发版之间版本号一直带 `-dev`**（Rust nightly / Firefox Nightly 那套）：Cargo.toml 写 `0.1.5-dev`，打包脚本再接上 git 短哈希，
    本地装的、CI 中间构建的都显示 `0.1.5-dev-1a2b3c4`（工作区有改动加 `+`），测试时一眼知道装的是哪个提交；版本号干净的一定是线上包；带 `-dev` 的标签 CI 直接拒绝。
