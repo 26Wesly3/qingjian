@@ -1,11 +1,12 @@
 ---
 title: Linux
 order: 6
-description: 在 Linux 上安装青简，使用 Fcitx4 或 Fcitx5 默认候选面板。
+description: 在 Linux（以及 FreeBSD）上安装青简，使用 Fcitx4 或 Fcitx5 默认候选面板。
 ---
 
 青简 Linux 使用系统默认候选面板。Fcitx5 提供 Ubuntu 26.04 预编译包和源码安装；Fcitx4 提供 Ubuntu 22.04 源码安装。
 Fcitx5 已验证 Ubuntu 26.04 的 GNOME 桌面（Wayland）上 GTK4、Qt6 应用与 Firefox；Fcitx4 已验证 Ubuntu 22.04 的 GTK3 文本框输入，以及 X11 下 Chrome 输入框的选中文字翻译与替换。
+FreeBSD 15.1 上用 Fcitx5 源码安装验证过 XFCE 与 KDE Plasma 的 X11 会话里的 GTK3、Qt6 应用和 Firefox，以及 Wayland 应用（sway 下）；KDE Plasma 的 Wayland 会话尚未验证。
 当前支持本地候选、学习、本地整句模型重排和可选云联想，提供青简设置程序，暂不自动启动。
 
 ## Ubuntu 22.04：Fcitx4 源码安装
@@ -72,6 +73,15 @@ sudo apt install cmake g++ pkg-config python3 libssl-dev \
 三个字体包不能省：设置程序的自绘界面要一个系统 UI 字体（`fonts-noto-core` 提供），
 没有它程序直接起不来；`fonts-noto-cjk` 画中文界面文字，`fonts-noto-color-emoji` 画表情，
 缺了不崩但界面残废。缺了哪一项，安装脚本开头会直接列出来。
+
+FreeBSD 也可以按本节源码安装（已在 FreeBSD 15.1 的 XFCE 桌面上验证过）：
+
+```sh
+pkg install bash cmake pkgconf python3 rustup-init nlohmann-json \
+  fcitx5 fcitx5-gtk3 fcitx5-qt6 fcitx5-configtool
+rustup-init   # 装 Rust
+```
+
 按发行版指引启用 Fcitx5；X11 应用通常需要 `GTK_IM_MODULE=fcitx`、`QT_IM_MODULE=fcitx`、`XMODIFIERS=@im=fcitx`，环境变化后重新登录。
 
 在源码目录执行：

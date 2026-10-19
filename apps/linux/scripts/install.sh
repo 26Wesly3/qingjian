@@ -40,12 +40,14 @@ any_file() {
 any_file /usr/share/fonts/truetype/noto/NotoSans-Regular.ttf /usr/share/fonts/noto/NotoSans-Regular.ttf \
   '/usr/share/fonts/google-noto-vf/NotoSans[wght].ttf' /usr/share/fonts/google-noto/NotoSans-Regular.ttf \
   /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf /usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf \
+  /usr/local/share/fonts/noto/NotoSans-Regular.ttf /usr/local/share/fonts/dejavu/DejaVuSans.ttf \
   || missing+=("系统 UI 字体（Noto Sans 或 DejaVu）")
 any_file /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc /usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc \
   /usr/share/fonts/google-noto-sans-cjk-vf-fonts/NotoSansCJK-VF.ttc /usr/share/fonts/google-noto-sans-cjk-fonts/NotoSansCJK-Regular.ttc \
+  /usr/local/share/fonts/noto/NotoSansCJKsc-Regular.otf \
   || echo '提示：没找到中文字体（Noto Sans CJK），设置程序里的中文会画不出来' >&2
 any_file /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf /usr/share/fonts/noto/NotoColorEmoji.ttf \
-  /usr/share/fonts/google-noto-color-emoji-fonts/NotoColorEmoji.ttf \
+  /usr/share/fonts/google-noto-color-emoji-fonts/NotoColorEmoji.ttf /usr/local/share/fonts/noto/NotoColorEmoji.ttf \
   || echo '提示：没找到 emoji 字体（Noto Color Emoji），表情会画不出来' >&2
 if ((${#missing[@]})); then
   echo "缺少依赖：${missing[*]}" >&2
@@ -53,11 +55,12 @@ if ((${#missing[@]})); then
     echo 'Debian / Ubuntu：sudo apt install cmake g++ pkg-config python3 libssl-dev fcitx-libs-dev libx11-dev libxres-dev nlohmann-json3-dev fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji；Rust 见 https://rustup.rs' >&2
   else
     echo 'Debian / Ubuntu：sudo apt install cmake g++ pkg-config python3 libssl-dev libfcitx5core-dev libfcitx5utils-dev libfcitx5config-dev nlohmann-json3-dev fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji；Rust 见 https://rustup.rs' >&2
+    echo 'FreeBSD：pkg install bash cmake pkgconf python3 fcitx5 nlohmann-json rustup-init（rustup-init 装 Rust）' >&2
   fi
   exit 1
 fi
-install_prefix=$(realpath -m -- "$install_prefix")
-cargo_output=$(realpath -m -- "${CARGO_TARGET_DIR:-$repo_root/target}")
+install_prefix=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "$install_prefix")
+cargo_output=$(python3 -c 'import os, sys; print(os.path.realpath(sys.argv[1]))' "${CARGO_TARGET_DIR:-$repo_root/target}")
 cargo_args=(build --manifest-path "$repo_root/Cargo.toml" --target-dir "$cargo_output" -p qingjian-linux-server -p qingjian-settings --locked)
 [[ "$build_profile" != release ]] || cargo_args+=(--release)
 cargo "${cargo_args[@]}"
