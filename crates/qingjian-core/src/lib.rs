@@ -17,6 +17,7 @@ pub mod panel;
 pub mod parser;
 pub mod punctuation;
 pub mod ranking;
+pub mod root_chart;
 pub mod sentence;
 pub mod shortcut;
 pub mod shuangpin;
