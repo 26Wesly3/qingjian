@@ -31,8 +31,9 @@ use qingjian_lm::BigramModel;
 use qingjian_platform::extra_dictionaries;
 use qingjian_platform::{
     Appearance, AppsConfig, CandidateRenderer, DEFAULT_ENGLISH_CANDIDATES_ON, DictionariesConfig,
-    GeneralConfig, HighlightKeys, KeyCombo, LEARNING_LANGUAGE_OFF, LayoutMode, LocalModelConfig,
-    LogLevel, Modifiers, PAGE_KEY_OPTIONS, PreeditMode, Scheme, ShortcutConfig, UpdateChannel,
+    GeneralConfig, HighlightKeys, KeyCombo, KeyHintMode, LEARNING_LANGUAGE_OFF, LayoutMode,
+    LocalModelConfig, LogLevel, Modifiers, PAGE_KEY_OPTIONS, PreeditMode, Scheme, ShortcutConfig,
+    UpdateChannel,
 };
 use qingjian_predict::{
     API_USAGE_FILE, CloudGlossFiller, CloudPredictor, ConnectionTest, PredictConfig, PredictError,
@@ -51,8 +52,8 @@ use config::{ConfigWatch, TextReplacement};
 pub use dictionaries::DictionaryInfo;
 pub use init::init;
 use model::RescoreMonitor;
-use presenting::Notice;
 pub use presenting::TranslationJob;
+use presenting::{KeyHintState, Notice};
 pub use session::Session;
 
 pub struct Host {
@@ -136,6 +137,12 @@ pub struct Host {
 
     /// 正在显示的提示（候选窗口里一行字，几秒后自动收）。
     pub notice: Option<Notice>,
+
+    /// 双拼键位提示什么时候弹出（配置 `[general] key_hint`）。
+    pub key_hint_mode: KeyHintMode,
+
+    /// 「卡住时显示」的停顿计时与这一段组句里弹没弹过。
+    key_hint: KeyHintState,
 
     /// 组句中的拼音显示在行内、候选窗口还是两处。
     pub preedit_mode: PreeditMode,

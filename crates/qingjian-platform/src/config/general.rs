@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 use super::scheme::{Scheme, scheme_label};
 use super::{
-    Appearance, CandidateRenderer, EmojiCount, FontSize, LayoutMode, LegacyTraditional, LogLevel,
-    PreeditMode, ShiftLetter,
+    Appearance, CandidateRenderer, EmojiCount, FontSize, KeyHintMode, LayoutMode,
+    LegacyTraditional, LogLevel, PreeditMode, ShiftLetter,
 };
 
 /// 每页最多几个候选：数字键只有 1–9。
@@ -20,6 +20,9 @@ pub const DEFAULT_THEME: &str = "qingjian";
 
 /// 缺省翻页键对，与 [`PAGE_KEY_OPTIONS`] 第一项一致。
 pub const DEFAULT_PAGE_KEYS: (char, char) = ('[', ']');
+
+/// 键位提示窗口缺省的不透明度（百分比）。
+pub const DEFAULT_KEY_HINT_OPACITY: u8 = 85;
 
 /// `[general]` 分节：与具体功能无关的常规项。
 /// `learning_language` 写这个值表示不显示译文。
@@ -140,6 +143,15 @@ pub struct GeneralConfig {
     /// 缺省关（展开成全拼音节）；常在双拼中打英文词或需要核对按键的人可打开。
     pub shuangpin_raw_preedit: bool,
 
+    /// 双拼键位提示：在候选窗旁画出当前方案的键位，敲了声母后标出能接的韵母键。见 [`KeyHintMode`]。
+    pub key_hint: KeyHintMode,
+
+    /// 键位提示窗口的不透明度（百分比，30–100），见 [`Self::key_hint_opacity`]。
+    pub key_hint_opacity: u8,
+
+    /// 键位提示键盘的大小（百分比，60–150，在候选字号的比例之上再缩放），见 [`Self::key_hint_size`]。
+    pub key_hint_size: u8,
+
     /// 形码侧方案：空串为关，`wubi86` 为五笔（86 版）。**与拼音同时开着就是混输**，见 [`Self::mixed`]。
     pub wubi: String,
 
@@ -211,6 +223,9 @@ impl Default for GeneralConfig {
             aux_code_keep_empty: true,
             scheme: String::new(),
             shuangpin_raw_preedit: false,
+            key_hint: KeyHintMode::default(),
+            key_hint_opacity: DEFAULT_KEY_HINT_OPACITY,
+            key_hint_size: 100,
             wubi: String::new(),
             shuangpin: None,
             zhuyin: None,
@@ -302,6 +317,16 @@ impl GeneralConfig {
     }
 
     /// 当前方案是双拼时是哪一套；不是双拼时为 `None`。
+    /// 键位提示窗口的不透明度（0–1），写出范围的收到 30%–100%：太透明就看不见了。
+    pub fn key_hint_opacity(&self) -> f32 {
+        f32::from(self.key_hint_opacity.clamp(30, 100)) / 100.0
+    }
+
+    /// 键位提示键盘的缩放倍数，写出范围的收到 60%–150%。
+    pub fn key_hint_size(&self) -> f32 {
+        f32::from(self.key_hint_size.clamp(60, 150)) / 100.0
+    }
+
     pub fn shuangpin(&self) -> Option<ShuangpinScheme> {
         self.scheme().shuangpin()
     }

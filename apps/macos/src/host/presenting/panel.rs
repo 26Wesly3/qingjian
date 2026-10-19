@@ -63,6 +63,7 @@ impl Host {
             status: None,
             mode: self.input_mode(),
             panel: Some(tabs),
+            keyboard: None,
         };
         self.window.show(frame, self.anchor);
     }

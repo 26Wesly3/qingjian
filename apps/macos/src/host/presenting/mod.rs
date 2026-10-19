@@ -1,9 +1,11 @@
 //! 呈现：删候选、按应用关英文候选、翻译选区的起止、提示气泡、会话重置与候选窗口绘制。
 
+mod key_hint;
 mod notice;
 mod panel;
 mod translation_job;
 
+pub(super) use key_hint::KeyHintState;
 pub(super) use notice::Notice;
 pub use translation_job::TranslationJob;
 
@@ -93,6 +95,7 @@ impl Host {
             self.render_panel();
             return;
         }
+        let keyboard = self.key_hint_keyboard();
         let size = self.session.layout.page_size();
         let page = self.session.page;
         // 横排展开成矩阵时画视口里的几行，序号只标在高亮所在那一行（数字键选的就是它）；单行时只画当前页
@@ -158,6 +161,7 @@ impl Host {
             status: self.status.clone(),
             mode: self.input_mode(),
             panel: None,
+            keyboard,
         };
         self.window.show(frame, self.anchor);
     }

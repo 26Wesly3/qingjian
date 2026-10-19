@@ -8,6 +8,7 @@ mod font_size;
 mod general;
 mod highlight_keys;
 mod key_combo;
+mod key_hint_mode;
 mod layout_mode;
 mod legacy_traditional;
 mod log_level;
@@ -44,11 +45,12 @@ pub use dictionaries::{DEFAULT_DOMAINS, DictionariesConfig};
 pub use emoji_count::EmojiCount;
 pub use font_size::FontSize;
 pub use general::{
-    DEFAULT_PAGE_KEYS, DEFAULT_THEME, GeneralConfig, LEARNING_LANGUAGE_OFF, MAX_PAGE_SIZE,
-    PAGE_KEY_OPTIONS,
+    DEFAULT_KEY_HINT_OPACITY, DEFAULT_PAGE_KEYS, DEFAULT_THEME, GeneralConfig,
+    LEARNING_LANGUAGE_OFF, MAX_PAGE_SIZE, PAGE_KEY_OPTIONS,
 };
 pub use highlight_keys::HighlightKeys;
 pub use key_combo::KeyCombo;
+pub use key_hint_mode::KeyHintMode;
 pub use layout_mode::LayoutMode;
 pub use legacy_traditional::LegacyTraditional;
 pub use log_level::LogLevel;
