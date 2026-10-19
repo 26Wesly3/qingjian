@@ -5,8 +5,8 @@
 
 pub use qingjian_render::sample::{annotated, nihao, nihao_with_sentence};
 use qingjian_render::{
-    Frame, Keyboard, Keycap, KeycapState, Layout, Mode, Preedit, PreeditSegment, PreeditStyle, Row,
-    StatusCell, Tone,
+    Frame, Keyboard, Keycap, KeycapState, Layout, Mode, Preedit, PreeditSegment, PreeditStyle,
+    Root, Row, StatusCell, Tone,
 };
 
 /// 候选窗样例：名字、帧、排布。
@@ -111,7 +111,55 @@ pub fn keyboard_scenes() -> Vec<(&'static str, Keyboard)> {
     vec![
         ("keyboard-idle", xiaohe(None)),
         ("keyboard-zh", xiaohe(Some(&XIAOHE_AFTER_V))),
+        ("keyboard-wubi", wubi()),
     ]
+}
+
+/// 86 版五笔字根图，读随包的字形表（`assets/wubi/roots86-glyphs.tsv`）。
+fn wubi() -> Keyboard {
+    const TABLE: &str = include_str!("../../../../assets/wubi/roots86-glyphs.tsv");
+    let mut keys: Vec<(char, Keycap)> = Vec::new();
+    for line in TABLE.lines().filter(|line| !line.starts_with('#')) {
+        let fields: Vec<&str> = line.split('\t').collect();
+        let key = fields[0].chars().next().unwrap();
+        let frame: Vec<f32> = fields[5]
+            .split(' ')
+            .filter_map(|v| v.parse().ok())
+            .collect();
+        let frame = match frame[..] {
+            [left, top, right, bottom] => Some([left, top, right, bottom]),
+            _ => None,
+        };
+        let root = Root::from_svg(fields[6], frame).unwrap();
+        match keys.iter_mut().find(|(k, _)| *k == key) {
+            Some((_, cap)) => cap.roots.push(root),
+            None => keys.push((
+                key,
+                Keycap {
+                    label: key.to_string(),
+                    corner: Some(fields[1].to_owned()),
+                    roots: vec![root],
+                    ..Keycap::default()
+                },
+            )),
+        }
+    }
+    let rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"]
+        .iter()
+        .map(|row| {
+            row.chars()
+                .map(|key| match keys.iter().find(|(k, _)| *k == key) {
+                    Some((_, cap)) => cap.clone(),
+                    None => Keycap {
+                        label: key.to_string(),
+                        lines: vec!["万能键".to_owned()],
+                        ..Keycap::default()
+                    },
+                })
+                .collect()
+        })
+        .collect();
+    Keyboard { rows }
 }
 
 fn xiaohe(next: Option<&[(char, &str)]>) -> Keyboard {
@@ -134,6 +182,7 @@ fn xiaohe(next: Option<&[(char, &str)]>) -> Keyboard {
                         corner: corner.map(str::to_owned),
                         lines: finals.iter().map(|f| (*f).to_owned()).collect(),
                         state,
+                        roots: Vec::new(),
                     }
                 })
                 .collect()

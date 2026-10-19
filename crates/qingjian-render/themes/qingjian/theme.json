@@ -129,7 +129,8 @@
   "keyboard": {
     "key_font": { "base": "candidate", "size": 13, "weight": "semibold" },
     "label_font": { "base": "index", "size": 9.5, "line_height": 11 },
-    "key_width": 42, "key_height": 50, "gap": 4, "padding": 8, "radius": 10, "key_radius": 6,
+    "root_font": { "base": "candidate", "size": 13 },
+    "key_width": 42, "key_height": 50, "root_key_width": 62, "root_key_height": 66, "gap": 4, "padding": 8, "radius": 10, "key_radius": 6,
     "background": "@surface", "key_fill": "@key", "key_text": "@text",
     "label": "@gloss", "initial": "@fresh",
     "pressed_fill": "@fresh", "pressed_text": "@surface",
