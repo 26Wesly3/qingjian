@@ -11,4 +11,6 @@ pub enum Popup {
     Emoji,
     Kaomoji,
     Symbols,
+    /// 双拼键位提示什么时候弹出。
+    KeyHint,
 }

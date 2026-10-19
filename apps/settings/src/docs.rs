@@ -24,6 +24,12 @@ const LINKS: &[(PageId, &str, &str, &str)] = &[
     ),
     (
         PageId::Input,
+        "键位提示",
+        "input/fuzzy-and-shuangpin",
+        "键位提示",
+    ),
+    (
+        PageId::Input,
         "五笔（86 版）",
         "input/fuzzy-and-shuangpin",
         "混输（五笔 + 拼音）",

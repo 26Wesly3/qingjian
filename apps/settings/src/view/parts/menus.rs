@@ -3,7 +3,7 @@
 use bamboo_slip::taffy::NodeId;
 use bamboo_slip::{Menu, RenderError, Ui};
 use qingjian_core::TraditionalVariant;
-use qingjian_platform::{EmojiCount, Scheme};
+use qingjian_platform::{EmojiCount, KeyHintMode, Scheme};
 
 use crate::message::{Message, Popup};
 use crate::view::Page;
@@ -19,6 +19,7 @@ pub fn anchor(popup: Popup) -> &'static str {
         Popup::Emoji => "emoji",
         Popup::Kaomoji => "kaomoji",
         Popup::Symbols => "symbols",
+        Popup::KeyHint => "key-hint",
     }
 }
 
@@ -101,6 +102,22 @@ pub fn menu(
                         .position(|variant| *variant == current),
                 )
             }
+            Popup::KeyHint => (
+                "key_hint",
+                KeyHintMode::ALL
+                    .iter()
+                    .map(|mode| mode.label().to_owned())
+                    .collect(),
+                strings(
+                    KeyHintMode::ALL
+                        .iter()
+                        .map(|mode| mode.key().to_owned())
+                        .collect(),
+                ),
+                KeyHintMode::ALL
+                    .iter()
+                    .position(|mode| *mode == general.key_hint),
+            ),
             Popup::Emoji | Popup::Kaomoji | Popup::Symbols => {
                 let (key, count) = match popup {
                     Popup::Emoji => ("emoji", general.emoji),
