@@ -12,17 +12,18 @@ pub(super) fn annotate_frame(frame: &Frame, value: &mut Value) {
             continue;
         };
         for (index, sense) in translation.senses().iter().enumerate() {
-            item["translation"]["senses"][index]["annotation"] = json!(annotation(sense));
+            item["translation"]["senses"][index]["annotation"] =
+                json!(annotation(sense, frame.translation_pos));
         }
     }
 }
 
-fn annotation(sense: &Sense) -> String {
+fn annotation(sense: &Sense, part_of_speech: bool) -> String {
     if sense.text.is_empty() {
         return String::new();
     }
     let mut text = String::new();
-    if let Some(pos) = sense.part_of_speech {
+    if let Some(pos) = sense.part_of_speech.filter(|_| part_of_speech) {
         text.push_str(pos.abbreviation());
         text.push(' ');
     }

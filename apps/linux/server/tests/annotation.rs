@@ -9,10 +9,14 @@ use qingjian_translate::Glossary;
 use serde_json::{Value, json};
 
 fn router(glosses: &str) -> Router {
+    router_with(glosses, RouterConfig::default())
+}
+
+fn router_with(glosses: &str, config: RouterConfig) -> Router {
     let engine = Engine::new(Dictionary::parse("开发\tkai fa\t100\n").unwrap()).with_translator(
         Box::new(Glossary::parse(Language::Japanese, glosses).unwrap()),
     );
-    let mut router = Router::new(engine, RouterConfig::default());
+    let mut router = Router::new(engine, config);
     router.handle(ClientMessage::OpenSession {
         session: SessionId(1),
         app: None,
@@ -133,4 +137,17 @@ fn normal_selection_and_missing_translations_keep_their_existing_behavior() {
         },
     );
     assert!(result["commit"].is_null());
+}
+
+#[test]
+fn turning_off_part_of_speech_keeps_only_the_translation_and_readings() {
+    let config = RouterConfig {
+        translation_pos: false,
+        ..RouterConfig::default()
+    };
+    let mut router = router_with("开发\tv. 開発する|かいはつする\n", config);
+    let result = compose(&mut router);
+    let sense = &result["frame"]["candidates"]["items"][0]["translation"]["senses"][0];
+    assert_eq!(sense["text"], "開発する");
+    assert_eq!(sense["annotation"], "開発(かいはつ)する");
 }
