@@ -13,6 +13,7 @@ mod decoded;
 mod extras;
 mod gloss;
 mod input_log;
+mod key_hint;
 mod learning;
 mod marked;
 mod mode_keys;

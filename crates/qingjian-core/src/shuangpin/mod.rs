@@ -8,10 +8,12 @@
 //! 见 [`Scheme`] 的各表；每套方案对全部音节做往返测试。
 
 mod decoded;
+mod key_hint;
 mod scheme;
 mod table;
 mod unit;
 
 pub use decoded::Decoded;
+pub use key_hint::{KeyCap, KeyHint, KeyState};
 pub use scheme::Scheme;
 pub use unit::Unit;
