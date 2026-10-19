@@ -5,7 +5,8 @@
 
 pub use qingjian_render::sample::{annotated, nihao, nihao_with_sentence};
 use qingjian_render::{
-    Frame, Layout, Mode, Preedit, PreeditSegment, PreeditStyle, Row, StatusCell, Tone,
+    Frame, Keyboard, Keycap, KeycapState, Layout, Mode, Preedit, PreeditSegment, PreeditStyle, Row,
+    StatusCell, Tone,
 };
 
 /// 候选窗样例：名字、帧、排布。
@@ -40,6 +41,105 @@ pub fn status_cells() -> Vec<StatusCell> {
         StatusCell::text("，。", true),
         StatusCell::Gear,
     ]
+}
+
+/// 键、翘舌声母、韵母。
+type XiaoheKey = (char, Option<&'static str>, &'static [&'static str]);
+
+/// 小鹤双拼的键位：键、翘舌声母、韵母（从 `qingjian_core::shuangpin::KeyHint` 抄）。
+const XIAOHE: [&[XiaoheKey]; 3] = [
+    &[
+        ('q', None, &["iu"]),
+        ('w', None, &["ei"]),
+        ('e', None, &["e"]),
+        ('r', None, &["uan"]),
+        ('t', None, &["üe", "ue"]),
+        ('y', None, &["un"]),
+        ('u', Some("sh"), &["u"]),
+        ('i', Some("ch"), &["i"]),
+        ('o', None, &["uo", "o"]),
+        ('p', None, &["ie"]),
+    ],
+    &[
+        ('a', None, &["a"]),
+        ('s', None, &["iong", "ong"]),
+        ('d', None, &["ai"]),
+        ('f', None, &["en"]),
+        ('g', None, &["eng"]),
+        ('h', None, &["ang"]),
+        ('j', None, &["an"]),
+        ('k', None, &["ing", "uai"]),
+        ('l', None, &["iang", "uang"]),
+    ],
+    &[
+        ('z', None, &["ou"]),
+        ('x', None, &["ia", "ua"]),
+        ('c', None, &["ao"]),
+        ('v', Some("zh"), &["ui", "ü"]),
+        ('b', None, &["in"]),
+        ('n', None, &["iao"]),
+        ('m', None, &["ian"]),
+    ],
+];
+
+/// 小鹤敲了 `v`（zh）之后各键拼成的音节；不在表里的键拼不出。
+const XIAOHE_AFTER_V: [(char, &str); 20] = [
+    ('w', "zhei"),
+    ('e', "zhe"),
+    ('r', "zhuan"),
+    ('y', "zhun"),
+    ('u', "zhu"),
+    ('i', "zhi"),
+    ('o', "zhuo"),
+    ('a', "zha"),
+    ('s', "zhong"),
+    ('d', "zhai"),
+    ('f', "zhen"),
+    ('g', "zheng"),
+    ('h', "zhang"),
+    ('j', "zhan"),
+    ('k', "zhuai"),
+    ('l', "zhuang"),
+    ('z', "zhou"),
+    ('x', "zhua"),
+    ('c', "zhao"),
+    ('v', "zhui"),
+];
+
+/// 键位提示样例：空闲的整张表，与敲了 zh 之后。
+pub fn keyboard_scenes() -> Vec<(&'static str, Keyboard)> {
+    vec![
+        ("keyboard-idle", xiaohe(None)),
+        ("keyboard-zh", xiaohe(Some(&XIAOHE_AFTER_V))),
+    ]
+}
+
+fn xiaohe(next: Option<&[(char, &str)]>) -> Keyboard {
+    let rows = XIAOHE
+        .iter()
+        .map(|row| {
+            row.iter()
+                .map(|(key, corner, finals)| {
+                    let state = match next {
+                        None => KeycapState::Normal,
+                        Some(next) => next
+                            .iter()
+                            .find(|(k, _)| k == key)
+                            .map_or(KeycapState::Dimmed, |(_, syllable)| {
+                                KeycapState::Next((*syllable).to_owned())
+                            }),
+                    };
+                    Keycap {
+                        label: key.to_ascii_uppercase().to_string(),
+                        corner: corner.map(str::to_owned),
+                        lines: finals.iter().map(|f| (*f).to_owned()).collect(),
+                        state,
+                    }
+                })
+                .collect()
+        })
+        .collect();
+    Keyboard { rows }
 }
 
 /// 带云联想的一页：整句补全与云端词各带云朵。
