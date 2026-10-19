@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SignPath 第二轮：签 Inno 打出的安装包（Inno 的安装包 SignPath 解不开，所以里面的文件先在 binaries.xml 那一轮签好）。
-     产品名来自 qingjian.iss 的 AppName。改了这里要同步粘到 SignPath 项目的 artifact configuration「installer」。 -->
+     不限定产品名：Inno 写进 Setup.exe 的产品名带尾随空格（「青简 」），对不上精确匹配；里面的文件在 binaries.xml 那一轮已经限定过。改了这里要同步粘到 SignPath 项目的 artifact configuration「installer」。 -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
   <zip-file>
-    <pe-file path="qingjian-*-windows-x86_64-setup.exe" product-name="青简">
+    <pe-file path="qingjian-*-windows-x86_64-setup.exe">
       <authenticode-sign />
     </pe-file>
   </zip-file>
