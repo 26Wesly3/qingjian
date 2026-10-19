@@ -30,20 +30,23 @@ if command -v pkg-config >/dev/null 2>&1; then
     pkg-config --exists "$module" || missing+=("$module")
   done
 fi
-# 自绘界面（设置程序）要一个系统 UI 字体，没有的话 FontLibrary::system 直接返回 NoUiFont、
-# 程序起不来。CJK 与 emoji 字体缺了不崩，但中文界面文字和表情画不出来——对中文输入法来说
-# 等于界面残废，所以一并算依赖。清单与 crates/bamboo-slip/src/fonts/linux.rs 的三个
-# ui_fonts() / script_fonts() / emoji_fonts() 路径对应，改那边时记得同步这里。
-ui_font_found=false
-for candidate in \
-  /usr/share/fonts/truetype/noto/NotoSans-Regular.ttf \
-  /usr/share/fonts/noto/NotoSans-Regular.ttf \
-  /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf; do
-  [[ -f "$candidate" ]] && ui_font_found=true && break
-done
-$ui_font_found || missing+=("系统 UI 字体（Noto Sans 或 DejaVu）")
-[[ -f /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc || -f /usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc ]] || missing+=("中文字体（Noto Sans CJK）")
-[[ -f /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf || -f /usr/share/fonts/noto/NotoColorEmoji.ttf ]] || missing+=("emoji 字体（Noto Color Emoji）")
+# 路径与 crates/bamboo-slip/src/fonts/linux.rs 的清单对应，改那边时同步这里。
+# 没有系统 UI 字体设置程序起不来，算缺依赖；中文与 emoji 字体缺了照样能起，只提示。
+any_file() {
+  local path
+  for path in "$@"; do [[ -f "$path" ]] && return 0; done
+  return 1
+}
+any_file /usr/share/fonts/truetype/noto/NotoSans-Regular.ttf /usr/share/fonts/noto/NotoSans-Regular.ttf \
+  '/usr/share/fonts/google-noto-vf/NotoSans[wght].ttf' /usr/share/fonts/google-noto/NotoSans-Regular.ttf \
+  /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf /usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf \
+  || missing+=("系统 UI 字体（Noto Sans 或 DejaVu）")
+any_file /usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc /usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc \
+  /usr/share/fonts/google-noto-sans-cjk-vf-fonts/NotoSansCJK-VF.ttc /usr/share/fonts/google-noto-sans-cjk-fonts/NotoSansCJK-Regular.ttc \
+  || echo '提示：没找到中文字体（Noto Sans CJK），设置程序里的中文会画不出来' >&2
+any_file /usr/share/fonts/truetype/noto/NotoColorEmoji.ttf /usr/share/fonts/noto/NotoColorEmoji.ttf \
+  /usr/share/fonts/google-noto-color-emoji-fonts/NotoColorEmoji.ttf \
+  || echo '提示：没找到 emoji 字体（Noto Color Emoji），表情会画不出来' >&2
 if ((${#missing[@]})); then
   echo "缺少依赖：${missing[*]}" >&2
   if $fcitx4; then
