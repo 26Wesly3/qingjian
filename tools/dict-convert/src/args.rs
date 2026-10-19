@@ -66,6 +66,24 @@ pub enum Command {
         name: String,
     },
 
+    /// 五笔字根图的字形：字根表（`assets/wubi/roots86.tsv`）+ 思源黑体 → SVG 路径表（写在 --out-dir 下）
+    WubiRoots {
+        /// 思源黑体 SC Regular（`SourceHanSansSC-Regular.otf`，不进仓库）
+        font: PathBuf,
+
+        /// 字根表
+        #[arg(long, default_value = "assets/wubi/roots86.tsv")]
+        spec: PathBuf,
+
+        /// 输出文件名
+        #[arg(long, default_value = "roots86-glyphs.tsv")]
+        name: String,
+
+        /// 把还没挑笔画（`?`）的部件画成一张笔画编号图（PNG）
+        #[arg(long)]
+        sheet: Option<PathBuf>,
+    },
+
     /// CC-CEDICT `cedict_ts.u8` → glossary-en.tsv
     Cedict {
         /// 输入文件
