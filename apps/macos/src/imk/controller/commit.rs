@@ -4,6 +4,13 @@ use super::*;
 
 impl QingjianInputController {
     pub(super) fn commit_highlighted(&self, client: TextClient<'_>) -> bool {
+        // 形码空码：编码查不到词，清掉编码，不把字母原样打进正文
+        if host::with(|h| h.engine.composing_code() && h.session.layout.is_empty()).unwrap_or(false)
+        {
+            host::with(|h| h.engine.clear());
+            self.refresh(client);
+            return true;
+        }
         let index = host::with(|h| h.session.highlighted).unwrap_or(0);
         self.commit_index(index, client)
     }

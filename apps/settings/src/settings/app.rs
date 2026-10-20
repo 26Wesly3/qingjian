@@ -51,6 +51,9 @@ impl App for Settings {
                 if page == PageId::Dictionaries {
                     self.library = Library::scan();
                 }
+                if page == PageId::Input {
+                    self.library.rescan_code_schemes();
+                }
                 if page == PageId::Stats {
                     self.stats = Some(Stats::load(&self.config.general));
                 }
@@ -270,6 +273,13 @@ impl App for Settings {
 
     fn set_system_dark(&mut self, dark: bool) {
         self.system_dark = dark;
+    }
+
+    /// 切回设置窗口时重扫形码方案：用户多半是刚在访达 / 资源管理器里往 `schemes/` 放了方案。
+    fn set_active(&mut self, active: bool) {
+        if active {
+            self.library.rescan_code_schemes();
+        }
     }
 
     fn spotlight(&self) -> Option<Key> {

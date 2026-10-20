@@ -9,11 +9,15 @@ use crate::message::{Message, Popup};
 use crate::view::Page;
 use crate::view::parts::controls::LANGUAGES;
 
+/// 形码方案下拉框里「关」那一项。
+pub const CODE_OFF: &str = "关";
+
 /// 下拉框的本地名，菜单靠它找位置。
 pub fn anchor(popup: Popup) -> &'static str {
     match popup {
         Popup::Font => "font",
         Popup::Scheme => "scheme",
+        Popup::Code => "code",
         Popup::LearningLanguage => "learning-language",
         Popup::Traditional => "traditional",
         Popup::Emoji => "emoji",
@@ -65,6 +69,21 @@ pub fn menu(
                     ),
                     Scheme::ALL.iter().position(|scheme| *scheme == current),
                 )
+            }
+            Popup::Code => {
+                let schemes = &page.settings.library.code_schemes;
+                let current = general.code();
+                let labels = std::iter::once(CODE_OFF.to_owned())
+                    .chain(schemes.iter().map(|entry| entry.label.clone()))
+                    .collect();
+                let values: Vec<String> = std::iter::once("off".to_owned())
+                    .chain(schemes.iter().map(|entry| entry.id.clone()))
+                    .collect();
+                let selected = match current {
+                    None => Some(0),
+                    Some(id) => values.iter().position(|value| *value == id),
+                };
+                ("code", labels, strings(values), selected)
             }
             Popup::LearningLanguage => (
                 "learning_language",

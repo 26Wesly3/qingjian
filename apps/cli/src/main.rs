@@ -16,15 +16,16 @@ mod rescoring;
 mod tuning;
 mod userwords;
 
+use std::path::Path;
 use std::sync::Arc;
 use std::time::Instant;
 
 use clap::Parser;
-use qingjian_core::{EmojiTable, Engine, FuzzyRules, Language};
+use qingjian_core::{CodeScheme, EmojiTable, Engine, FuzzyRules, Language};
 use qingjian_dictionary::{AuxCodeLookup, AuxCodeTable, CodeTable, Dictionary, WordList};
 use qingjian_learning::FrequencyLearner;
 use qingjian_lm::BigramModel;
-use qingjian_platform::{Config, Scheme};
+use qingjian_platform::{Config, Scheme, code_schemes};
 use qingjian_predict::CloudPredictor;
 use qingjian_translate::Glossary;
 
@@ -86,8 +87,8 @@ fn run() -> Result<(), CliError> {
     if let Some(path) = &args.replay {
         // 日志里形码那些行也要能重放：回放按每条的方案切引擎，所以它自己得留一份码表
         // （`build_engine` 那份的所有权已经交给引擎了）
-        let code_table = args.wubi.as_ref().map(CodeTable::from_path).transpose()?;
-        let report = replay::run(&mut engine, path, args.misses, code_table)?;
+        let code = args.code.as_deref().map(load_code_scheme).transpose()?;
+        let report = replay::run(&mut engine, path, args.misses, code)?;
         print!("{report}");
         return Ok(());
     }
@@ -129,6 +130,16 @@ fn run() -> Result<(), CliError> {
 }
 
 /// 组装 Engine：这是 Core 之外唯一知道具体 Translator / Learner 类型的地方。
+/// `--code` 给的形码：目录按方案读（`scheme.toml` 的规则照用），文件当 86 五笔的码表、规则全关。
+fn load_code_scheme(path: &Path) -> Result<CodeScheme, CliError> {
+    if path.is_dir() {
+        let entry =
+            code_schemes::from_dir(path).ok_or_else(|| CliError::CodeScheme(path.to_owned()))?;
+        return Ok(entry.load()?);
+    }
+    Ok(CodeScheme::new("wubi", CodeTable::from_path(path)?))
+}
+
 fn build_engine(args: &Args) -> Result<Engine, CliError> {
     let language: Language = args
         .language
@@ -324,19 +335,19 @@ fn build_engine(args: &Args) -> Result<Engine, CliError> {
             scheme.clone()
         };
     }
-    // 两条轴：拼音侧看 `[general] scheme`，形码侧看 `[general] wubi`；`--wubi` 给了码表就算开着形码。
+    // 两条轴：拼音侧看 `[general] scheme`，形码侧看 `[general] code`；`--code` 给了码表就算开着形码。
     // 两边都开就是混输，见 docs/user/input/fuzzy-and-shuangpin.md
     let scheme = config.general.scheme();
-    let wubi = config.general.wubi() || args.wubi.is_some();
-    tracing::info!(pinyin = scheme.key(), wubi, "输入方案已启用");
+    let code = config.general.code().is_some() || args.code.is_some();
+    tracing::info!(pinyin = scheme.key(), code, "输入方案已启用");
     engine.set_shuangpin(scheme.shuangpin());
     engine.set_zhuyin_mode(scheme == Scheme::Zhuyin);
     // 拼音侧关掉且形码开着才是「只用形码」；两边都关着时留拼音兜底
-    engine.set_phonetic(scheme.is_on() || !wubi);
-    // 形码的码表由 `--wubi` 显式给（方案本身只说「用哪套」，码表文件在哪由壳决定）
-    if let Some(path) = &args.wubi {
-        engine.set_code_table(Some(CodeTable::from_path(path)?));
-        tracing::info!(table = %path.display(), "形码码表已载入");
+    engine.set_phonetic(scheme.is_on() || !code);
+    // 形码的码表由 `--code` 显式给（配置只说「用哪套」，码表文件在哪由壳决定）
+    if let Some(path) = &args.code {
+        engine.set_code_scheme(Some(load_code_scheme(path)?));
+        tracing::info!(table = %path.display(), "形码方案已载入");
     }
     engine.set_aux_code_key(config.general.aux_code_key(), config.general.page_keys());
     engine.set_aux_keep_empty(config.general.aux_code_keep_empty);

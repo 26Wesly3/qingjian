@@ -5,6 +5,7 @@
 //! 判断标准：换掉 IMK 换成 TSF，不应该需要改这里的任何一行。
 
 pub mod candidate;
+pub mod code_scheme;
 pub mod composition;
 pub mod correction;
 pub mod custom_phrase;
@@ -31,6 +32,7 @@ pub use candidate::{
     Candidate, CandidateKind, CandidateLayout, CandidateList, Cell, GRID_ROWS, Grid, Language,
     MAX_CELL_EMS, PartOfSpeech, Sense, Translation,
 };
+pub use code_scheme::CodeScheme;
 pub use composition::Composition;
 pub use correction::Correction;
 pub use emoji::EmojiTable;

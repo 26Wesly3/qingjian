@@ -116,6 +116,9 @@ pub struct Host {
     /// 组句中敲会转全角的标点先把高亮候选上屏、再补该标点（配置 `[general] punct_commits`，缺省关）。
     pub punct_commits: bool,
 
+    /// 装着的形码方案（名字给主题显示），配置没动它时不重读码表。
+    pub code_slot: qingjian_platform::code_schemes::CodeSchemeSlot,
+
     /// 配数字键上屏第一 / 第二个译词的修饰键组合（配置 `[shortcut] translation` / `translation_second`）。
     pub translation_keys: (Modifiers, Modifiers),
 

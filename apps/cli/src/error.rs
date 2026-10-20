@@ -33,6 +33,10 @@ pub enum CliError {
     #[error(transparent)]
     Config(#[from] ConfigError),
 
+    /// `--code` 给的目录不是能用的形码方案（id 不合法、`scheme.toml` 坏了或码表不在，详情在日志里）。
+    #[error("{0} is not a usable code scheme directory")]
+    CodeScheme(std::path::PathBuf),
+
     #[error(transparent)]
     Predict(#[from] PredictError),
 

@@ -218,7 +218,7 @@ impl Router {
             tracing::warn!(%error, "自定义短语配置未应用，保持原短语");
         }
         // 拼音侧与形码侧一起装配（双拼 / 注音 / 混输都在里面）
-        self.reload_code_table(config.general.scheme(), config.general.wubi());
+        self.reload_code_scheme(config.general.scheme(), config.general.code().as_deref());
         self.engine.set_traditional(config.general.traditional());
         self.engine.set_learning(config.general.learning);
         self.engine.set_mode_keys(config.shortcut.mode);

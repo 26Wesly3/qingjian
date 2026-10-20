@@ -79,6 +79,9 @@ pub fn choice<T: Copy + PartialEq + 'static>(
         .build(ui, &page.theme, local, move |index| message(values[index]))
 }
 
+/// 下拉框最宽多少点：值再长（用户方案起的名字）就截短补「…」，点开的菜单里仍是全名。
+const SELECT_MAX_WIDTH: f32 = 260.0;
+
 /// 下拉框，点开 `popup` 那个菜单；`options` 是菜单里的各项，只给搜索用。
 pub fn select(
     ui: &mut Ui<Message>,
@@ -91,6 +94,7 @@ pub fn select(
     Select::new(value)
         .options(options)
         .width(width)
+        .max_width(SELECT_MAX_WIDTH)
         .disabled(disabled)
         .build(ui, &page.theme, anchor(popup), Message::OpenMenu(popup))
 }

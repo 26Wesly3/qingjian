@@ -134,7 +134,9 @@ impl QingjianInputController {
         // 会转全角的标点（`,` `.` `?` `!` 引号、括号这些）不进缓冲区：落到下方先把高亮候选上屏再补全角标点
         //（`nihao,` 一气打完「你好，」），与 Windows / Linux 壳一致；这条上屏行为由 `[general] punct_commits`
         // 控制（缺省开），关掉恢复老行为：标点也进缓冲区（英文直输段）。
-        let punct_commits = host::with(|h| h.punct_commits).unwrap_or(false);
+        // 单用形码时标点总是先上屏（五笔的习惯），不看这个开关
+        let punct_commits =
+            host::with(|h| h.punct_commits || h.engine.composing_code()).unwrap_or(false);
         let punctuation = composing
             && !question
             && !expression
@@ -142,6 +144,10 @@ impl QingjianInputController {
             && c != page_previous
             && c != page_next
             && !(punct_commits && qingjian_core::punctuation::converts(c));
+        // 形码满码再敲字母：先把高亮候选顶上屏，这个字母起下一段编码
+        if host::with(|h| h.engine.code_tops(c)).unwrap_or(false) {
+            self.commit_highlighted(client);
+        }
         if c.is_ascii_lowercase()
             || (composing && c == '\'')
             || semicolon
@@ -152,6 +158,10 @@ impl QingjianInputController {
             || punctuation
         {
             host::with(|h| h.engine.push(c));
+            if let Some(text) = host::with(|h| h.engine.commit_unique_code()).flatten() {
+                tracing::debug!(%text, "commit unique code");
+                client.insert_text(&text);
+            }
             self.refresh(client);
             return true;
         }

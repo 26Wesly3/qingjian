@@ -94,9 +94,10 @@ pub struct Args {
     #[arg(long)]
     pub shuangpin: Option<String>,
 
-    /// 形码码表（五笔）的 TSV 文件（`词\t编码\t词频`）：给了就用编码查表，不走拼音那一套
-    #[arg(long, value_name = "码表")]
-    pub wubi: Option<PathBuf>,
+    /// 形码：码表 TSV（`词\t编码\t词频`，按 86 五笔记日志、按键规则全关）或方案目录（`scheme.toml` + 码表）。
+    /// 给了就开着形码；`--wubi` 是旧写法
+    #[arg(long, alias = "wubi", value_name = "码表或方案目录")]
+    pub code: Option<PathBuf>,
 
     /// 神经重打分：字级 Transformer 的 .qjm 文件或导出目录（model.safetensors / config.json / vocab.json），整句前几条路径用它重排
     #[arg(long)]
@@ -188,7 +189,7 @@ pub struct Args {
     pub eval_details: Option<PathBuf>,
 
     /// 冷启动字词评测：读取 JSONL，不加载个人配置或个人学习文件
-    #[arg(long, requires = "cold_output", conflicts_with_all = ["user_dict", "config", "predict", "replay", "eval_text", "english_mode", "shuangpin", "wubi", "aux_table", "tune", "fuzzy", "inputs", "neural_async", "mine_log", "check_user_words"])]
+    #[arg(long, requires = "cold_output", conflicts_with_all = ["user_dict", "config", "predict", "replay", "eval_text", "english_mode", "shuangpin", "code", "aux_table", "tune", "fuzzy", "inputs", "neural_async", "mine_log", "check_user_words"])]
     pub eval_cold: Option<PathBuf>,
 
     /// 冷启动逐词结果 JSONL（拒绝覆盖）

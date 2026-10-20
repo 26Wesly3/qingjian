@@ -1,8 +1,8 @@
-//! 「输入」页：方案（拼音、双拼显示按键、五笔），模糊音，辅码。
+//! 「输入」页：方案（拼音、双拼显示按键、形码），模糊音，辅码。
 
 use bamboo_slip::taffy::LengthPercentage;
 use bamboo_slip::taffy::{Dimension, FlexDirection, FlexWrap, NodeId, Rect, Size, Style};
-use bamboo_slip::{Checkbox, RenderError, SettingRow, Switch, Ui, Visual, group, section_title};
+use bamboo_slip::{Checkbox, RenderError, SettingRow, Ui, Visual, group, section_title};
 use qingjian_platform::Scheme;
 
 use super::shortcuts;
@@ -13,6 +13,7 @@ use crate::support::Feature;
 use crate::view::Page;
 use crate::view::parts::controls::{select, toggle_info, toggle_with};
 use crate::view::parts::lists::{entry_row, import_row, toggle_disabled};
+use crate::view::parts::menus::CODE_OFF;
 
 /// 模糊音的九条：配置键、界面名。
 const FUZZY: [(&str, &str); 9] = [
@@ -60,17 +61,24 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
             false,
         )?);
     }
-    let wubi = general.wubi();
-    let switch = Switch::new(wubi).build(
-        ui,
-        theme,
-        "wubi",
-        Message::set("general", "wubi", if wubi { "" } else { "wubi86" }),
-    )?;
+    let schemes = &page.settings.library.code_schemes;
+    let code = general.code();
+    // 配置里写的方案找不到（目录删了）时照写 id，让人知道选的是什么
+    let current = match &code {
+        None => CODE_OFF.to_owned(),
+        Some(id) => schemes
+            .iter()
+            .find(|entry| entry.id == *id)
+            .map_or_else(|| format!("{id}（找不到）"), |entry| entry.label.clone()),
+    };
+    let names: Vec<&str> = std::iter::once(CODE_OFF)
+        .chain(schemes.iter().map(|entry| entry.label.as_str()))
+        .collect();
+    let control = select(ui, page, Popup::Code, (&current, &names), 160.0, false)?;
     rows.push(
-        SettingRow::new("五笔（86 版）")
-            .info("跟拼音同时开就是混输，五笔打全的词排在前面")
-            .control(switch)
+        SettingRow::new("形码")
+            .info("跟拼音同时开就是混输，形码打全的词排在前面；自己的方案放在数据目录的 schemes 文件夹里")
+            .control(control)
             .build(ui, theme)?,
     );
     out.push(section_title(ui, theme, "方案")?);

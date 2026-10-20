@@ -125,8 +125,7 @@ impl Router {
                 self.status.show_status(StatusView {
                     english,
                     zhuyin: self.config.scheme == Scheme::Zhuyin,
-                    // 现算，不存下来：存了会与 scheme / wubi 冗余、手搓配置的地方就漂移
-                    scheme: Some(scheme_label(self.config.scheme, self.config.wubi))
+                    scheme: Some(scheme_label(self.config.scheme, self.code_slot.label()))
                         .filter(|label| !label.is_empty()),
                     full_width: self.full_width_for(english),
                     appearance: self.config.appearance,

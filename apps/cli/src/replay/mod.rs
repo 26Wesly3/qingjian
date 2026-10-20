@@ -12,8 +12,7 @@ mod tally;
 
 use std::path::Path;
 
-use qingjian_core::{Engine, InputLogEntry, InputSource};
-use qingjian_dictionary::CodeTable;
+use qingjian_core::{CodeScheme, Engine, InputLogEntry, InputSource};
 
 pub use report::Report;
 
@@ -21,19 +20,19 @@ use line::Line;
 use scheme::SchemeSwitcher;
 use tally::Tally;
 
-/// 跑一遍日志，返回报告。`code_table` 是给日志里形码那些行用的（`--wubi` 给的码表）。
+/// 跑一遍日志，返回报告。`code` 是给日志里形码那些行用的（`--code` 给的方案）。
 pub fn run(
     engine: &mut Engine,
     path: &Path,
     show_misses: usize,
-    code_table: Option<CodeTable>,
+    code: Option<CodeScheme>,
 ) -> Result<Report, ReplayError> {
     let text = std::fs::read_to_string(path).map_err(|source| ReplayError::Read {
         path: path.to_owned(),
         source,
     })?;
     let mut report = Report::default();
-    let mut switcher = SchemeSwitcher::new(code_table);
+    let mut switcher = SchemeSwitcher::new(code);
     for (number, raw) in text.lines().enumerate() {
         if raw.trim().is_empty() {
             continue;
@@ -96,7 +95,7 @@ fn replay_commit(
     report: &mut Report,
     show_misses: usize,
 ) {
-    // 这条日志所属方案回放不了（形码但没给 `--wubi`）：只计数。拿拼音的读法去喂形码的键会算出
+    // 这条日志所属方案回放不了（形码但没给 `--code`）：只计数。拿拼音的读法去喂形码的键会算出
     // 看着像真的、实则无意义的命中率。
     if !switcher.can_replay(&commit.scheme) {
         report.skip(commit.source);

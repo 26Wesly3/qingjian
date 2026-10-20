@@ -17,6 +17,8 @@ use crate::sentence::{Interpolation, LanguageModel, Personal, SentenceScorer};
 use crate::shuangpin::Scheme;
 use crate::traditional::{Traditional, TraditionalVariant};
 use qingjian_dictionary::{AuxCodeLookup, CodeTable, Dictionary, WordList};
+
+use crate::code_scheme::CodeScheme;
 use std::sync::Arc;
 
 impl Engine {
@@ -122,15 +124,20 @@ impl Engine {
         self.traditional.variant()
     }
 
-    /// 换形码码表（五笔），`None` 回到拼音的诸方案。编码与拼音是两套键，纠错缓存一并清掉。
-    pub fn set_code_table(&mut self, table: Option<CodeTable>) {
-        self.code = table;
+    /// 换形码方案，`None` 回到拼音的诸方案。编码与拼音是两套键，纠错缓存一并清掉。
+    pub fn set_code_scheme(&mut self, scheme: Option<CodeScheme>) {
+        self.code = scheme;
         *self.correction_cache.borrow_mut() = None;
         self.forget_span_cache();
     }
 
     /// 当前的形码码表；`None` 表示走拼音（全拼 / 双拼 / 注音）。
     pub fn code_table(&self) -> Option<&CodeTable> {
+        self.code.as_ref().map(|scheme| &scheme.table)
+    }
+
+    /// 当前的形码方案。
+    pub fn code_scheme(&self) -> Option<&CodeScheme> {
         self.code.as_ref()
     }
 
@@ -140,7 +147,7 @@ impl Engine {
     }
 
     /// 拼音侧参不参与查询。形码开着时把它关掉就是「只用形码」（`[general] scheme = "none"`）；
-    /// 两边都开是混输，见 [`Self::set_code_table`] 与 [`Self::query_mixed`]。
+    /// 两边都开是混输，见 [`Self::set_code_scheme`] 与 [`Self::query_mixed`]。
     pub fn set_phonetic(&mut self, on: bool) {
         self.phonetic = on;
         *self.correction_cache.borrow_mut() = None;

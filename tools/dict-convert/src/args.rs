@@ -61,8 +61,8 @@ pub enum Command {
         #[arg(long, default_value = "assets/lexicon/dict.tsv", num_args = 1..)]
         frequency: Vec<PathBuf>,
 
-        /// 输出文件名（写在 --out-dir 下）
-        #[arg(long, default_value = "wubi86.tsv")]
+        /// 输出文件名（写在 --out-dir 下）；缺省是形码方案目录里码表的缺省名
+        #[arg(long, default_value = "table.tsv")]
         name: String,
     },
 

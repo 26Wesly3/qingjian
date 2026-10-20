@@ -22,12 +22,7 @@ const LINKS: &[(PageId, &str, &str, &str)] = &[
         "input/fuzzy-and-shuangpin",
         "双拼",
     ),
-    (
-        PageId::Input,
-        "五笔（86 版）",
-        "input/fuzzy-and-shuangpin",
-        "混输（五笔 + 拼音）",
-    ),
+    (PageId::Input, "形码", "input/fuzzy-and-shuangpin", "形码"),
     (PageId::Input, "启用", "input/aux-code", "用法"),
     (PageId::Input, "触发键", "input/aux-code", "触发键"),
     (PageId::Input, "导入码表", "input/aux-code", "码表"),

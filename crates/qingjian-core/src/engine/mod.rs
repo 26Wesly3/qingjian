@@ -6,6 +6,7 @@
 mod alignment;
 mod annotation;
 mod aux_code;
+mod code_keys;
 mod commit;
 mod composing;
 mod correcting;
@@ -34,7 +35,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use qingjian_dictionary::{AuxCodeLookup, CodeTable, Dictionary, Match, WordList};
+use qingjian_dictionary::{AuxCodeLookup, Dictionary, Match, WordList};
 
 pub use alignment::Alignment;
 pub use annotation::AnnotationReport;
@@ -64,6 +65,7 @@ pub use vocabulary::{
 };
 
 use crate::candidate::{Candidate, CandidateKind, CandidateList, Language};
+use crate::code_scheme::CodeScheme;
 use crate::composition::Composition;
 use crate::correction::{self, Correction, TypoCosts, typo};
 use crate::emoji::EmojiTable;
@@ -259,8 +261,8 @@ pub struct Engine {
     /// 注音模式开关，開著時緩衝區裡是注音大千鍵位，查詞前先解成拼音（見 [`crate::zhuyin`]）。
     zhuyin: bool,
 
-    /// 形码码表（五笔）。`Some` 时编码参与查询，按前缀查表（见 [`Engine::query_code`]）。
-    code: Option<CodeTable>,
+    /// 形码方案（五笔或用户导入的）。`Some` 时编码参与查询，按前缀查表（见 [`Engine::query_code`]）。
+    code: Option<CodeScheme>,
 
     /// 拼音侧（全拼 / 双拼 / 注音）参不参与查询，缺省参与。
     ///
@@ -313,9 +315,6 @@ pub struct Engine {
     /// 繁体输出：候选出 Core 时换成繁体、上屏时换回简体，缺省不转（见 [`crate::traditional`]）。
     traditional: Traditional,
 }
-
-/// 形码编码最长几位（五笔四码）：混输下超过它的输入只可能是拼音。
-const MAX_CODE_LENGTH: usize = 4;
 
 /// 英文补全最多几条（`compa` → company / compare / …）。
 const ENGLISH_COMPLETIONS: usize = 3;

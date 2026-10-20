@@ -4,6 +4,7 @@ mod aux_code;
 mod cloud;
 mod cloud_trigger;
 mod code;
+mod code_keys;
 mod correction;
 mod custom;
 mod emoji;

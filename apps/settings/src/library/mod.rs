@@ -1,4 +1,4 @@
-//! 词库与码表的清单：随包的、用户导入的各有哪些，名字、条数、许可证。进词库页（或导入、移除）时扫一次，不每帧读盘。
+//! 词库、码表与形码方案的清单：随包的、用户导入的各有哪些，名字、条数、许可证。进词库页（或导入、移除）时扫一次，不每帧读盘。
 //! 移除是挪进目录里的 `removed/`，不真删。
 
 mod entry;
@@ -10,6 +10,7 @@ pub use kind::Kind;
 use std::path::{Path, PathBuf};
 
 use qingjian_dictionary::{Dictionary, aux_code_table_info};
+use qingjian_platform::code_schemes::{self, CodeSchemeEntry};
 
 use crate::system::paths;
 
@@ -22,6 +23,9 @@ pub struct Library {
     pub bundled_codes: Vec<Entry>,
 
     pub codes: Vec<Entry>,
+
+    /// 能选的形码方案（内置五笔与用户目录 `schemes/` 下的），只读描述、不读码表。
+    pub code_schemes: Vec<CodeSchemeEntry>,
 }
 
 impl Library {
@@ -40,8 +44,18 @@ impl Library {
             dictionaries: scan(Kind::Dictionary, Kind::Dictionary.user_dir()),
             bundled_codes: scan(Kind::CodeTable, Kind::CodeTable.bundled_dir()),
             codes: scan(Kind::CodeTable, Kind::CodeTable.user_dir()),
+            code_schemes: scan_code_schemes(),
         }
     }
+
+    /// 只重扫形码方案（读目录与 `scheme.toml`，不读码表），切回窗口与进「输入」页时用。
+    pub fn rescan_code_schemes(&mut self) {
+        self.code_schemes = scan_code_schemes();
+    }
+}
+
+fn scan_code_schemes() -> Vec<CodeSchemeEntry> {
+    code_schemes::list(paths::user_dir().as_deref(), bundled_schemes().as_deref())
 }
 
 fn entry(kind: Kind, stem: String, path: &Path) -> Entry {
@@ -90,6 +104,15 @@ fn bundled_dir(name: &str) -> Option<PathBuf> {
         .map(|dir| dir.join(name))
         .find(|dir| dir.is_dir())
         .or_else(|| paths::bundled(&format!("data/generated/{name}")))
+}
+
+/// 随包的形码方案目录，与各平台输入法读的同一处：macOS 在 `Resources/schemes/`，其他平台在随包根的 `assets/schemes/`。
+fn bundled_schemes() -> Option<PathBuf> {
+    paths::mac_resources()
+        .into_iter()
+        .map(|dir| dir.join(code_schemes::DIR))
+        .find(|dir| dir.is_dir())
+        .or_else(|| paths::bundled(&format!("assets/{}", code_schemes::DIR)))
 }
 
 /// 挪进 `removed/`；输入法看到文件没了会自己卸掉。

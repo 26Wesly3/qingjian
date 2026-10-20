@@ -34,7 +34,7 @@ impl Host {
         self.engine.set_auto_space(config.general.auto_space);
         self.engine
             .set_shift_letter_compose(config.general.shift_letter.compose());
-        self.apply_scheme(config.general.scheme(), config.general.wubi());
+        self.apply_scheme(config.general.scheme(), config.general.code().as_deref());
         self.engine
             .set_shuangpin_raw_preedit(config.general.shuangpin_raw_preedit);
         self.engine.set_learning(config.general.learning);
@@ -255,33 +255,15 @@ impl Host {
         }
     }
 
-    /// 按配置的两条轴装配引擎：拼音侧（全拼 / 双拼 / 注音 / 关）与形码侧（五笔）。
-    /// 两边都开就是混输——编码打全的形码候选在前，见 `Engine::query_mixed`。
-    ///
-    /// 开了形码却找不到码表时只警告并退回只用拼音——配置说五笔、引擎一个字都打不出更糟。
-    fn apply_scheme(&mut self, pinyin: Scheme, wubi: bool) {
-        self.engine.set_shuangpin(pinyin.shuangpin());
-        self.engine.set_zhuyin_mode(pinyin == Scheme::Zhuyin);
-        // 拼音侧关掉且形码开着才是「只用形码」；两边都关着时留拼音兜底（否则一个候选都没有）
-        self.engine.set_phonetic(pinyin.is_on() || !wubi);
-        if !wubi {
-            self.engine.set_code_table(None);
-            return;
-        }
-        let Some(path) = paths::code_table_path() else {
-            tracing::warn!("选了形码方案但找不到码表，仍按拼音输入；随包数据里应当带一份");
-            self.engine.set_code_table(None);
-            return;
-        };
-        match qingjian_dictionary::CodeTable::from_path(&path) {
-            Ok(table) => {
-                tracing::info!(table = %path.display(), entries = table.len(), "形码码表已载入");
-                self.engine.set_code_table(Some(table));
-            }
-            Err(error) => {
-                tracing::error!(%error, table = %path.display(), "形码码表读不了，仍按拼音输入");
-                self.engine.set_code_table(None);
-            }
-        }
+    /// 按配置的两条轴装配引擎：拼音侧（全拼 / 双拼 / 注音 / 关）与形码侧（随包或用户方案），
+    /// 找法、退回拼音与「没变不重读」见 [`qingjian_platform::code_schemes::CodeSchemeSlot`]。
+    fn apply_scheme(&mut self, pinyin: Scheme, code: Option<&str>) {
+        self.code_slot.apply(
+            &mut self.engine,
+            pinyin,
+            code,
+            paths::user_data_dir().as_deref(),
+            paths::bundled_schemes_dir().as_deref(),
+        );
     }
 }
