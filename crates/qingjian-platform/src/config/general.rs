@@ -6,7 +6,7 @@ use super::{
     Appearance, CandidateRenderer, EmojiCount, FontSize, LayoutMode, LegacyTraditional, LogLevel,
     PreeditMode, ShiftLetter,
 };
-use crate::code_schemes::WUBI86;
+use crate::code_schemes::{self, WUBI86};
 
 /// 每页最多几个候选：数字键只有 1–9。
 pub const MAX_PAGE_SIZE: usize = 9;
@@ -267,6 +267,7 @@ impl GeneralConfig {
         if !key.is_empty() {
             return match key.parse() {
                 Ok(scheme) => scheme,
+                Err(_) if code_schemes::is_valid_id(key) => Scheme::Custom,
                 Err(_) => {
                     tracing::warn!(key, "不认识的拼音方案，按全拼");
                     Scheme::Pinyin
@@ -310,6 +311,11 @@ impl GeneralConfig {
     /// 当前方案是双拼时是哪一套；不是双拼时为 `None`。
     pub fn shuangpin(&self) -> Option<ShuangpinScheme> {
         self.scheme().shuangpin()
+    }
+
+    /// 拼音侧选的用户双拼方案（id）；不是 [`Scheme::Custom`] 时为 `None`。这里只读配置，方案在不在由壳去找。
+    pub fn custom_shuangpin(&self) -> Option<String> {
+        (self.scheme() == Scheme::Custom).then(|| self.scheme.trim().to_owned())
     }
 
     /// 当前方案是不是大千注音。
@@ -462,8 +468,14 @@ mod tests {
         general.scheme = "none".to_owned();
         assert_eq!(general.scheme(), Scheme::Off);
         assert!(!general.scheme().is_on());
-        general.scheme = "flypy".to_owned();
+        assert_eq!(general.custom_shuangpin(), None);
+        general.scheme = " my-sp ".to_owned();
+        assert_eq!(general.scheme(), Scheme::Custom);
+        assert_eq!(general.custom_shuangpin().as_deref(), Some("my-sp"));
+        assert_eq!(general.shuangpin(), None);
+        general.scheme = "Flypy!".to_owned();
         assert_eq!(general.scheme(), Scheme::Pinyin);
+        assert_eq!(general.custom_shuangpin(), None);
     }
 
     #[test]

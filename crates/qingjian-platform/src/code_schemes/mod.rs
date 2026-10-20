@@ -1,19 +1,20 @@
 //! 形码方案：随包的（如 86 五笔）与用户数据目录 `schemes/<id>/` 下自己放进去的，同一种格式、同一套找法。
 //!
-//! 一套方案一个目录，目录名就是 id：`scheme.toml` 写名字与按键规则（见 [`Descriptor`]，可省），码表是 `词\t编码\t词频` 的 TSV。
+//! 一套方案一个目录，目录名就是 id：`scheme.toml` 写名字、元信息与按键规则（见 [`Descriptor`]，必须有），码表是 `词\t编码\t词频` 的 TSV。
 //! 用户目录里与随包同 id 的方案盖过随包那套；老位置 `wubi/wubi86.tsv` 仍认，只换随包五笔的码表。
 //! 随包的 `schemes` 目录在哪由壳给（macOS 在 `Resources/`，Windows 在安装目录的 `assets/`）。
 
 mod descriptor;
 mod entry;
-mod slot;
 
 use std::path::{Path, PathBuf};
 
 use self::descriptor::Descriptor;
 pub use self::entry::CodeSchemeEntry;
-pub use self::slot::CodeSchemeSlot;
 use crate::Scheme;
+
+/// `scheme.toml` 里 `type` 写这个（或不写）就是形码方案。
+pub const KIND: &str = "code";
 
 /// 随包的 86 五笔。
 pub const WUBI86: &str = "wubi86";
@@ -21,7 +22,7 @@ pub const WUBI86: &str = "wubi86";
 /// 方案目录名，随包与用户数据目录下都叫这个。
 pub const DIR: &str = "schemes";
 
-const DESCRIPTOR: &str = "scheme.toml";
+pub(crate) const DESCRIPTOR: &str = "scheme.toml";
 
 /// 老位置：用户自己换的五笔码表（2026-09 起就认这里）。
 const LEGACY_WUBI_TABLE: &str = "wubi/wubi86.tsv";
@@ -109,13 +110,23 @@ fn read(dir: &Path, bundled: bool) -> Option<CodeSchemeEntry> {
                 return None;
             }
         },
-        // 没有 scheme.toml 也算：全按缺省，名字用目录名
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Descriptor::default(),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            tracing::warn!(dir = %dir.display(), "方案目录里没有 scheme.toml，跳过");
+            return None;
+        }
         Err(error) => {
             tracing::warn!(file = %path.display(), %error, "scheme.toml 读不了，跳过");
             return None;
         }
     };
+    match descriptor.kind.as_str() {
+        "" | KIND => {}
+        crate::shuangpin_schemes::KIND => return None,
+        kind => {
+            tracing::warn!(file = %path.display(), kind, "不认识的方案种类，跳过");
+            return None;
+        }
+    }
     let table = dir.join(&descriptor.table);
     if !table.is_file() {
         tracing::warn!(file = %table.display(), "形码方案的码表不在，跳过");
@@ -128,6 +139,7 @@ fn read(dir: &Path, bundled: bool) -> Option<CodeSchemeEntry> {
     Some(CodeSchemeEntry {
         id,
         label,
+        meta: descriptor.meta,
         table,
         auto_commit: descriptor.auto_commit,
         top: descriptor.top,

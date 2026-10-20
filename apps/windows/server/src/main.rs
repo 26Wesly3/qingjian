@@ -218,7 +218,7 @@ fn main() {
     if let Err(error) = engine.set_custom_phrases(config.custom_phrases.clone()) {
         tracing::warn!(%error, "自定义短语配置未应用");
     }
-    // 拼音侧与形码侧在 `configure_code_scheme` 里一起装配（双拼 / 注音 / 混输都在那）
+    // 拼音侧与形码侧在 `configure_schemes` 里一起装配（双拼 / 注音 / 混输都在那）
     engine.set_traditional(config.general.traditional());
     engine.set_learning(config.general.learning);
     engine.set_mode_keys(config.shortcut.mode);
@@ -240,7 +240,7 @@ fn main() {
     let mut router = Router::new(engine, router_config.clone());
     let model_path = dispatch::find_model(user_dir().as_deref(), &root);
     router.configure_local_model(model_path.clone(), &config.model);
-    router.configure_code_scheme(dispatch::find_bundled_schemes(&root));
+    router.configure_schemes(&config, dispatch::find_bundled_schemes(&root));
     if let Some(path) = config_path() {
         let user = user_dir();
         router.watch_config(

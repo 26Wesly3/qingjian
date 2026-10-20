@@ -108,7 +108,8 @@ impl Engine {
             "zhuyin".to_owned()
         } else {
             self.shuangpin
-                .map_or_else(String::new, |s| s.key().to_owned())
+                .as_deref()
+                .map_or_else(String::new, |layout| layout.key().to_owned())
         };
         let Some(code) = &self.code else {
             return phonetic;
@@ -299,7 +300,7 @@ impl Engine {
         is_raw(
             self.composition.text(),
             self.modes(),
-            self.shuangpin,
+            self.shuangpin.as_deref(),
             self.zhuyin,
         )
     }

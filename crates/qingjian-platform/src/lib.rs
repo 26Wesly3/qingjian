@@ -12,9 +12,12 @@ pub mod extra_dictionaries;
 pub mod logs;
 pub mod protocol;
 pub mod resources;
+mod scheme_meta;
+mod scheme_slot;
+pub mod shuangpin_schemes;
 
 pub use config::{
-    Appearance, AppsConfig, AuxCodeConfig, CandidateRenderer, Config, DEFAULT_DOMAINS,
+    Appearance, AppsConfig, AuxCodeConfig, CandidateRenderer, CodeRules, Config, DEFAULT_DOMAINS,
     DEFAULT_ENGLISH_CANDIDATES_ON, DEFAULT_ENGLISH_CANDIDATES_ON_LINUX,
     DEFAULT_ENGLISH_CANDIDATES_ON_MACOS, DEFAULT_ENGLISH_CANDIDATES_ON_WINDOWS, DEFAULT_PAGE_KEYS,
     DEFAULT_THEME, DictionariesConfig, EmojiCount, FontSize, GeneralConfig, HighlightKeys,
@@ -23,3 +26,5 @@ pub use config::{
     SwitchKey, SwitchKeys, UpdateChannel, UpdateConfig, scheme_label, scheme_name,
 };
 pub use error::ConfigError;
+pub use scheme_meta::SchemeMeta;
+pub use scheme_slot::SchemeSlot;

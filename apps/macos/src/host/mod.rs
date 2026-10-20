@@ -117,7 +117,7 @@ pub struct Host {
     pub punct_commits: bool,
 
     /// 装着的形码方案（名字给主题显示），配置没动它时不重读码表。
-    pub code_slot: qingjian_platform::code_schemes::CodeSchemeSlot,
+    pub scheme_slot: qingjian_platform::SchemeSlot,
 
     /// 配数字键上屏第一 / 第二个译词的修饰键组合（配置 `[shortcut] translation` / `translation_second`）。
     pub translation_keys: (Modifiers, Modifiers),

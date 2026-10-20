@@ -1,11 +1,11 @@
-//! 形码方案的装载：`[general] code` 选了形码时，把方案找出来挂到引擎上。
+//! 输入方案的装载：拼音侧（内置或用户双拼）与形码侧按配置找出来挂到引擎上。
 //!
 //! 随包方案在安装目录的 `assets/schemes/`，用户方案在 `%APPDATA%\Qingjian\schemes\<id>\`，
-//! 找法与「没变不重读」见 [`qingjian_platform::code_schemes`]。
+//! 找法与「没变不重读」见 [`qingjian_platform::SchemeSlot`]。
 
 use std::path::{Path, PathBuf};
 
-use qingjian_platform::{Scheme, scheme_name};
+use qingjian_platform::Config;
 
 use super::Router;
 
@@ -22,24 +22,22 @@ pub fn find_bundled_schemes(bundled_root: &Path) -> Option<PathBuf> {
 
 impl Router {
     /// 启动时把随包方案目录交给路由器，并按当前配置装配一次。
-    pub fn configure_code_scheme(&mut self, bundled_schemes: Option<PathBuf>) {
+    pub fn configure_schemes(&mut self, config: &Config, bundled_schemes: Option<PathBuf>) {
         self.bundled_schemes = bundled_schemes;
-        let code = self.config.code.clone();
-        self.reload_code_scheme(self.config.scheme, code.as_deref());
+        self.reload_schemes(config);
     }
 
     /// 主题与启动日志显示的方案名（单开全拼也写「全拼」）。
     pub fn scheme_name(&self) -> String {
-        scheme_name(self.config.scheme, self.code_slot.label())
+        self.scheme_slot.scheme_name(self.config.scheme)
     }
 
     /// 热加载：按新配置的两条轴重新装配；方案与码表都没变时不重读码表。
-    pub(super) fn reload_code_scheme(&mut self, pinyin: Scheme, code: Option<&str>) {
+    pub(super) fn reload_schemes(&mut self, config: &Config) {
         let user_dir = qingjian_platform::dirs::user_dir();
-        self.code_slot.apply(
+        self.scheme_slot.apply(
             &mut self.engine,
-            pinyin,
-            code,
+            config,
             user_dir.as_deref(),
             self.bundled_schemes.as_deref(),
         );

@@ -2,6 +2,7 @@ mod appearance;
 mod apps;
 mod aux_code;
 mod candidate_renderer;
+mod code_rules;
 mod dictionaries;
 mod emoji_count;
 mod font_size;
@@ -24,6 +25,7 @@ mod status_bar;
 mod switch_key;
 mod update;
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
 use qingjian_core::FuzzyRules;
@@ -40,6 +42,7 @@ pub use apps::{
 };
 pub use aux_code::AuxCodeConfig;
 pub use candidate_renderer::CandidateRenderer;
+pub use code_rules::CodeRules;
 pub use dictionaries::{DEFAULT_DOMAINS, DictionariesConfig};
 pub use emoji_count::EmojiCount;
 pub use font_size::FontSize;
@@ -102,6 +105,9 @@ pub struct Config {
 
     /// 检查更新。
     pub update: UpdateConfig,
+
+    /// 各形码方案的按键规则（`[code.<id>]`），按方案 id；没写的方案按它自己的 `scheme.toml`。
+    pub code: BTreeMap<String, CodeRules>,
 }
 
 /// 模板的 `[apps]` 一节（Linux）：应用按 fcitx5 认到的名字（X11 是 WM_CLASS，Wayland 是 app_id）。
@@ -423,6 +429,11 @@ channel = "stable"
 );
 
 impl Config {
+    /// 用户给形码方案 `id` 改的按键规则；没改过时全是 `None`。
+    pub fn code_rules(&self, id: &str) -> CodeRules {
+        self.code.get(id).copied().unwrap_or_default()
+    }
+
     /// 保存自定义短语列表，冲突时不修改文件。
     pub fn set_custom_phrases(
         path: &Path,
@@ -566,15 +577,11 @@ impl Config {
             path: path.to_owned(),
             source: Box::new(source),
         })?;
-        // 分节不存在时先建成标准表，否则 toml_edit 会写成顶层的行内表 `predict = { enabled = true }`
-        if !document.get(section).is_some_and(|item| item.is_table()) {
-            document[section] = toml_edit::table();
-        }
         // 旧写法（外观写在 theme 里）要在改键之前认出来：写的正是 theme 时，新值会把它盖掉
         let legacy = (section == "general" && matches!(key, "appearance" | "theme"))
             .then(|| legacy_appearance(&document))
             .flatten();
-        document[section][key] = toml_edit::value(value);
+        section_table(&mut document, section)[key] = toml_edit::value(value);
         if let Some(old) = legacy {
             migrate_legacy_theme(&mut document, old);
         }
@@ -604,14 +611,11 @@ impl Config {
             path: path.to_owned(),
             source: Box::new(source),
         })?;
-        if !document.get(section).is_some_and(|item| item.is_table()) {
-            document[section] = toml_edit::table();
-        }
         let mut array = toml_edit::Array::new();
         for value in values {
             array.push(value.as_ref());
         }
-        document[section][key] = toml_edit::value(array);
+        section_table(&mut document, section)[key] = toml_edit::value(array);
         write_file(path, &document.to_string())
     }
 
@@ -666,6 +670,23 @@ fn migrate_legacy_theme(document: &mut DocumentMut, old: Appearance) {
 }
 
 /// 原子写配置文件；数据目录还没有就先建（新账户第一次打开设置时输入法可能还没跑过）。
+/// 取（没有就建）分节 `section`，`code.wubi86` 这样带点的是嵌套分节。
+/// 一律建成标准表：否则 toml_edit 会写成顶层的行内表 `predict = { enabled = true }`；
+/// 嵌套时外层是隐式的，文件里只出现 `[code.wubi86]`、不多出一个空的 `[code]`。
+fn section_table<'a>(document: &'a mut DocumentMut, section: &str) -> &'a mut toml_edit::Table {
+    let mut table = document.as_table_mut();
+    let mut parts = section.split('.').peekable();
+    while let Some(part) = parts.next() {
+        if !table.get(part).is_some_and(|item| item.is_table()) {
+            let mut child = toml_edit::Table::new();
+            child.set_implicit(parts.peek().is_some());
+            table.insert(part, toml_edit::Item::Table(child));
+        }
+        table = table[part].as_table_mut().expect("刚确认过是表");
+    }
+    table
+}
+
 fn write_file(path: &Path, text: &str) -> Result<(), ConfigError> {
     let write = || {
         if let Some(dir) = path.parent() {

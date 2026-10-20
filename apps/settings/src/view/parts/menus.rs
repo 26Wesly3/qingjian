@@ -6,6 +6,7 @@ use qingjian_core::TraditionalVariant;
 use qingjian_platform::{EmojiCount, Scheme};
 
 use crate::message::{Message, Popup};
+use crate::support::Feature;
 use crate::view::Page;
 use crate::view::parts::controls::LANGUAGES;
 
@@ -27,6 +28,29 @@ pub fn anchor(popup: Popup) -> &'static str {
 }
 
 /// 下拉框还没画过（拿不到位置）时不出。
+/// 拼音下拉的选项（名字，配置写法）：内置的按 [`Scheme::ALL`]，用户双拼方案插在内置双拼后面
+/// （输入法还不读方案目录的平台不列）。
+pub fn scheme_options(page: &Page) -> Vec<(String, String)> {
+    let builtin = |scheme: &Scheme| (scheme.label().to_owned(), scheme.key().to_owned());
+    let custom = page
+        .settings
+        .library
+        .shuangpin_schemes
+        .iter()
+        .filter(|_| Feature::Schemes.here())
+        .map(|entry| (entry.label.clone(), entry.id.clone()));
+    let split = Scheme::ALL
+        .iter()
+        .rposition(|scheme| matches!(scheme, Scheme::Shuangpin(_)))
+        .map_or(Scheme::ALL.len(), |last| last + 1);
+    Scheme::ALL[..split]
+        .iter()
+        .map(builtin)
+        .chain(custom)
+        .chain(Scheme::ALL[split..].iter().map(builtin))
+        .collect()
+}
+
 pub fn menu(
     ui: &mut Ui<Message>,
     page: &Page,
@@ -54,21 +78,17 @@ pub fn menu(
                 ("font", labels, strings(values), selected)
             }
             Popup::Scheme => {
-                let current = general.scheme();
-                (
-                    "scheme",
-                    Scheme::ALL
-                        .iter()
-                        .map(|scheme| scheme.label().to_owned())
-                        .collect(),
-                    strings(
-                        Scheme::ALL
-                            .iter()
-                            .map(|scheme| scheme.key().to_owned())
-                            .collect(),
-                    ),
-                    Scheme::ALL.iter().position(|scheme| *scheme == current),
-                )
+                let options = scheme_options(page);
+                let current = general.scheme.trim();
+                let selected = options
+                    .iter()
+                    .position(|(_, key)| *key == current)
+                    .or_else(|| {
+                        let current = general.scheme();
+                        options.iter().position(|(_, key)| *key == current.key())
+                    });
+                let (labels, values) = options.into_iter().unzip();
+                ("scheme", labels, strings(values), selected)
             }
             Popup::Code => {
                 let schemes = &page.settings.library.code_schemes;

@@ -1,4 +1,4 @@
-//! 词库、码表与形码方案的清单：随包的、用户导入的各有哪些，名字、条数、许可证。进词库页（或导入、移除）时扫一次，不每帧读盘。
+//! 词库、码表与输入方案的清单：随包的、用户导入的各有哪些，名字、条数、许可证。进词库页（或导入、移除）时扫一次，不每帧读盘。
 //! 移除是挪进目录里的 `removed/`，不真删。
 
 mod entry;
@@ -11,6 +11,7 @@ use std::path::{Path, PathBuf};
 
 use qingjian_dictionary::{Dictionary, aux_code_table_info};
 use qingjian_platform::code_schemes::{self, CodeSchemeEntry};
+use qingjian_platform::shuangpin_schemes::{self, ShuangpinSchemeEntry};
 
 use crate::system::paths;
 
@@ -26,6 +27,9 @@ pub struct Library {
 
     /// 能选的形码方案（内置五笔与用户目录 `schemes/` 下的），只读描述、不读码表。
     pub code_schemes: Vec<CodeSchemeEntry>,
+
+    /// 用户目录 `schemes/` 下的双拼方案（内置九套不在这里）。
+    pub shuangpin_schemes: Vec<ShuangpinSchemeEntry>,
 }
 
 impl Library {
@@ -45,17 +49,23 @@ impl Library {
             bundled_codes: scan(Kind::CodeTable, Kind::CodeTable.bundled_dir()),
             codes: scan(Kind::CodeTable, Kind::CodeTable.user_dir()),
             code_schemes: scan_code_schemes(),
+            shuangpin_schemes: scan_shuangpin_schemes(),
         }
     }
 
-    /// 只重扫形码方案（读目录与 `scheme.toml`，不读码表），切回窗口与进「输入」页时用。
-    pub fn rescan_code_schemes(&mut self) {
+    /// 只重扫形码与双拼方案（读目录与 `scheme.toml`，不读码表），切回窗口与进「输入」页时用。
+    pub fn rescan_schemes(&mut self) {
         self.code_schemes = scan_code_schemes();
+        self.shuangpin_schemes = scan_shuangpin_schemes();
     }
 }
 
 fn scan_code_schemes() -> Vec<CodeSchemeEntry> {
     code_schemes::list(paths::user_dir().as_deref(), bundled_schemes().as_deref())
+}
+
+fn scan_shuangpin_schemes() -> Vec<ShuangpinSchemeEntry> {
+    shuangpin_schemes::list(paths::user_dir().as_deref(), bundled_schemes().as_deref())
 }
 
 fn entry(kind: Kind, stem: String, path: &Path) -> Entry {

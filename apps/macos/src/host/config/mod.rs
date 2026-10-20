@@ -6,6 +6,7 @@ mod watch;
 pub(super) use text_replacements::TextReplacement;
 pub(super) use watch::ConfigWatch;
 
+use qingjian_platform::Config;
 use qingjian_render::TextSizes;
 
 use super::init::load_glossary;
@@ -34,7 +35,7 @@ impl Host {
         self.engine.set_auto_space(config.general.auto_space);
         self.engine
             .set_shift_letter_compose(config.general.shift_letter.compose());
-        self.apply_scheme(config.general.scheme(), config.general.code().as_deref());
+        self.apply_scheme(&config);
         self.engine
             .set_shuangpin_raw_preedit(config.general.shuangpin_raw_preedit);
         self.engine.set_learning(config.general.learning);
@@ -256,12 +257,11 @@ impl Host {
     }
 
     /// 按配置的两条轴装配引擎：拼音侧（全拼 / 双拼 / 注音 / 关）与形码侧（随包或用户方案），
-    /// 找法、退回拼音与「没变不重读」见 [`qingjian_platform::code_schemes::CodeSchemeSlot`]。
-    fn apply_scheme(&mut self, pinyin: Scheme, code: Option<&str>) {
-        self.code_slot.apply(
+    /// 找法、退回拼音与「没变不重读」见 [`qingjian_platform::SchemeSlot`]。
+    fn apply_scheme(&mut self, config: &Config) {
+        self.scheme_slot.apply(
             &mut self.engine,
-            pinyin,
-            code,
+            config,
             paths::user_data_dir().as_deref(),
             paths::bundled_schemes_dir().as_deref(),
         );

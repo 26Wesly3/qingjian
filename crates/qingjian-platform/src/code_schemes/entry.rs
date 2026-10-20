@@ -6,6 +6,7 @@ use qingjian_core::CodeScheme;
 use qingjian_dictionary::{CodeTable, DictionaryError};
 
 use super::WUBI86;
+use crate::{CodeRules, SchemeMeta};
 
 /// 一套可用的形码方案。列表与设置页只要它；真要用时 [`Self::load`] 才读码表。
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -14,6 +15,8 @@ pub struct CodeSchemeEntry {
     pub id: String,
 
     pub label: String,
+
+    pub meta: SchemeMeta,
 
     pub table: PathBuf,
 
@@ -29,6 +32,13 @@ pub struct CodeSchemeEntry {
 }
 
 impl CodeSchemeEntry {
+    /// 用户在设置里改过的规则盖上去（见 [`CodeRules`]）。
+    pub fn with_rules(mut self, rules: CodeRules) -> Self {
+        self.auto_commit = rules.auto_commit.unwrap_or(self.auto_commit);
+        self.top = rules.top.unwrap_or(self.top);
+        self
+    }
+
     /// 读码表，装成 Core 的方案。
     pub fn load(&self) -> Result<CodeScheme, DictionaryError> {
         let table = CodeTable::from_path(&self.table)?;

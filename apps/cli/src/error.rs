@@ -37,6 +37,10 @@ pub enum CliError {
     #[error("{0} is not a usable code scheme directory")]
     CodeScheme(std::path::PathBuf),
 
+    /// `--shuangpin` 给的目录不是能用的双拼方案（没写 `type = "shuangpin"`、键位写错了，详情在日志里）。
+    #[error("{0} is not a usable shuangpin scheme directory")]
+    ShuangpinScheme(std::path::PathBuf),
+
     #[error(transparent)]
     Predict(#[from] PredictError),
 

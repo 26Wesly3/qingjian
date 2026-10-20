@@ -170,7 +170,7 @@ impl Host {
             english,
             traditional: general.traditional() != TraditionalVariant::Off,
             full_width: !english && general.full_width_punctuation,
-            scheme: qingjian_platform::scheme_name(general.scheme(), self.code_slot.label()),
+            scheme: self.scheme_slot.scheme_name(general.scheme()),
         }
     }
 }

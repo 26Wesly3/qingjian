@@ -11,8 +11,9 @@ mod scheme;
 mod tally;
 
 use std::path::Path;
+use std::sync::Arc;
 
-use qingjian_core::{CodeScheme, Engine, InputLogEntry, InputSource};
+use qingjian_core::{CodeScheme, Engine, InputLogEntry, InputSource, ShuangpinLayout};
 
 pub use report::Report;
 
@@ -20,19 +21,21 @@ use line::Line;
 use scheme::SchemeSwitcher;
 use tally::Tally;
 
-/// 跑一遍日志，返回报告。`code` 是给日志里形码那些行用的（`--code` 给的方案）。
+/// 跑一遍日志，返回报告。`code` 是给日志里形码那些行用的（`--code` 给的方案），
+/// `shuangpin` 是给用户双拼方案那些行用的（`--shuangpin` 给的方案目录）。
 pub fn run(
     engine: &mut Engine,
     path: &Path,
     show_misses: usize,
     code: Option<CodeScheme>,
+    shuangpin: Option<Arc<ShuangpinLayout>>,
 ) -> Result<Report, ReplayError> {
     let text = std::fs::read_to_string(path).map_err(|source| ReplayError::Read {
         path: path.to_owned(),
         source,
     })?;
     let mut report = Report::default();
-    let mut switcher = SchemeSwitcher::new(code);
+    let mut switcher = SchemeSwitcher::new(code, shuangpin);
     for (number, raw) in text.lines().enumerate() {
         if raw.trim().is_empty() {
             continue;

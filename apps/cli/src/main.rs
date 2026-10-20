@@ -21,11 +21,11 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use clap::Parser;
-use qingjian_core::{CodeScheme, EmojiTable, Engine, FuzzyRules, Language};
+use qingjian_core::{CodeScheme, EmojiTable, Engine, FuzzyRules, Language, ShuangpinLayout};
 use qingjian_dictionary::{AuxCodeLookup, AuxCodeTable, CodeTable, Dictionary, WordList};
 use qingjian_learning::FrequencyLearner;
 use qingjian_lm::BigramModel;
-use qingjian_platform::{Config, Scheme, code_schemes};
+use qingjian_platform::{Config, Scheme, code_schemes, shuangpin_schemes};
 use qingjian_predict::CloudPredictor;
 use qingjian_translate::Glossary;
 
@@ -88,7 +88,8 @@ fn run() -> Result<(), CliError> {
         // 日志里形码那些行也要能重放：回放按每条的方案切引擎，所以它自己得留一份码表
         // （`build_engine` 那份的所有权已经交给引擎了）
         let code = args.code.as_deref().map(load_code_scheme).transpose()?;
-        let report = replay::run(&mut engine, path, args.misses, code)?;
+        let shuangpin = load_shuangpin_scheme(&args)?;
+        let report = replay::run(&mut engine, path, args.misses, code, shuangpin)?;
         print!("{report}");
         return Ok(());
     }
@@ -138,6 +139,21 @@ fn load_code_scheme(path: &Path) -> Result<CodeScheme, CliError> {
         return Ok(entry.load()?);
     }
     Ok(CodeScheme::new("wubi", CodeTable::from_path(path)?))
+}
+
+/// `--shuangpin` 给的是目录时按用户双拼方案读；给的是方案写法（`xiaohe`）时为 `None`。
+fn load_shuangpin_scheme(args: &Args) -> Result<Option<Arc<ShuangpinLayout>>, CliError> {
+    let Some(path) = args
+        .shuangpin
+        .as_deref()
+        .map(Path::new)
+        .filter(|path| path.is_dir())
+    else {
+        return Ok(None);
+    };
+    let entry = shuangpin_schemes::from_dir(path)
+        .ok_or_else(|| CliError::ShuangpinScheme(path.to_owned()))?;
+    Ok(Some(entry.layout))
 }
 
 fn build_engine(args: &Args) -> Result<Engine, CliError> {
@@ -327,8 +343,9 @@ fn build_engine(args: &Args) -> Result<Engine, CliError> {
     engine.set_traditional(config.general.traditional());
     engine.set_fuzzy(config.fuzzy);
     engine.set_mode_keys(config.shortcut.mode);
-    // `--shuangpin` 现在写的是 [general] scheme（同一个维度的旧键已经并进去），off 就是全拼
-    if let Some(scheme) = &args.shuangpin {
+    // `--shuangpin` 写的是 [general] scheme，off 就是全拼
+    let custom = load_shuangpin_scheme(args)?;
+    if let Some(scheme) = args.shuangpin.as_ref().filter(|_| custom.is_none()) {
         config.general.scheme = if scheme == "off" {
             Scheme::Pinyin.key().to_owned()
         } else {
@@ -337,10 +354,17 @@ fn build_engine(args: &Args) -> Result<Engine, CliError> {
     }
     // 两条轴：拼音侧看 `[general] scheme`，形码侧看 `[general] code`；`--code` 给了码表就算开着形码。
     // 两边都开就是混输，见 docs/user/input/fuzzy-and-shuangpin.md
-    let scheme = config.general.scheme();
+    let scheme = if custom.is_some() {
+        Scheme::Custom
+    } else {
+        config.general.scheme()
+    };
     let code = config.general.code().is_some() || args.code.is_some();
     tracing::info!(pinyin = scheme.key(), code, "输入方案已启用");
-    engine.set_shuangpin(scheme.shuangpin());
+    match custom {
+        Some(layout) => engine.set_shuangpin_layout(Some(layout)),
+        None => engine.set_shuangpin(scheme.shuangpin()),
+    }
     engine.set_zhuyin_mode(scheme == Scheme::Zhuyin);
     // 拼音侧关掉且形码开着才是「只用形码」；两边都关着时留拼音兜底
     engine.set_phonetic(scheme.is_on() || !code);

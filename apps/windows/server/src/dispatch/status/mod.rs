@@ -8,7 +8,7 @@ mod sink;
 mod view;
 
 use qingjian_platform::protocol::{IndicatorCommand, SessionId};
-use qingjian_platform::{Config, Scheme, scheme_label};
+use qingjian_platform::{Config, Scheme};
 
 pub use self::event::StatusEvent;
 pub use self::sink::{NoopStatusSink, StatusSink};
@@ -125,7 +125,7 @@ impl Router {
                 self.status.show_status(StatusView {
                     english,
                     zhuyin: self.config.scheme == Scheme::Zhuyin,
-                    scheme: Some(scheme_label(self.config.scheme, self.code_slot.label()))
+                    scheme: Some(self.scheme_slot.scheme_label(self.config.scheme))
                         .filter(|label| !label.is_empty()),
                     full_width: self.full_width_for(english),
                     appearance: self.config.appearance,

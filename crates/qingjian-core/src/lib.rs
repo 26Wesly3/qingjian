@@ -52,5 +52,5 @@ pub use panel::{PANEL_COLUMNS, PanelGroup, PanelSection, SymbolPanel};
 pub use parser::{ParseError, Segmentation};
 pub use punctuation::Punctuation;
 pub use qingjian_dictionary as dictionary;
-pub use shuangpin::Scheme as ShuangpinScheme;
+pub use shuangpin::{Layout as ShuangpinLayout, Scheme as ShuangpinScheme};
 pub use traditional::{Traditional, TraditionalVariant};

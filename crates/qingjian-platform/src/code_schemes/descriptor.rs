@@ -2,6 +2,8 @@
 
 use serde::Deserialize;
 
+use crate::SchemeMeta;
+
 /// 码表文件的缺省名，与 `scheme.toml` 同目录。
 const DEFAULT_TABLE: &str = "table.tsv";
 
@@ -9,8 +11,15 @@ const DEFAULT_TABLE: &str = "table.tsv";
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub(super) struct Descriptor {
+    /// 方案种类：空着或 [`super::KIND`] 是形码；`shuangpin` 是双拼方案（见 [`crate::shuangpin_schemes`]），形码这边跳过。
+    #[serde(rename = "type")]
+    pub kind: String,
+
     /// 界面与状态条上的名字；空着时用目录名。
     pub name: String,
+
+    #[serde(flatten)]
+    pub meta: SchemeMeta,
 
     /// 码表文件，相对方案目录。
     pub table: String,
@@ -26,7 +35,9 @@ pub(super) struct Descriptor {
 impl Default for Descriptor {
     fn default() -> Self {
         Self {
+            kind: String::new(),
             name: String::new(),
+            meta: SchemeMeta::default(),
             table: DEFAULT_TABLE.to_owned(),
             auto_commit: true,
             top: true,
