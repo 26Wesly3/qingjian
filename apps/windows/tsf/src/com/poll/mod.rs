@@ -13,6 +13,7 @@ use std::rc::Rc;
 
 use windows::Win32::Foundation::{E_FAIL, HWND, LPARAM, LRESULT, WPARAM};
 use windows::Win32::System::Threading::GetCurrentProcessId;
+use windows::Win32::UI::Input::KeyboardAndMouse::{GetKeyboardLayout, HKL};
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, GetClassNameW, GetForegroundWindow,
     GetWindowThreadProcessId, HWND_MESSAGE, KillTimer, SetTimer, WINDOW_EX_STYLE, WINDOW_STYLE,
@@ -85,6 +86,7 @@ impl PollTimer {
                     engine,
                     shared,
                     ticks: Cell::new(0),
+                    english_layout: Cell::new(false),
                     client_id,
                 }),
             )
@@ -120,9 +122,11 @@ unsafe extern "system" fn wndproc(hwnd: HWND, msg: u32, wparam: WPARAM, lparam: 
 fn poll_once(context: &PollContext) {
     let tick = context.ticks.get().wrapping_add(1);
     context.ticks.set(tick);
+    let foreground = tick.is_multiple_of(MODE_SYNC_EVERY) && in_foreground(context);
+    let english_layout = foreground && sync_keyboard_layout(context);
     let translating = context.shared.translating();
     if !context.shared.composing() && !translating {
-        if tick.is_multiple_of(MODE_SYNC_EVERY) && in_foreground(context) {
+        if foreground && !english_layout {
             sync_mode(context);
         }
         return;
@@ -155,6 +159,36 @@ fn poll_once(context: &PollContext) {
             context.shared.end_composing();
         }
     }
+}
+
+/// 英语键盘布局不属于青简输入法：通知 Server 收起状态条；切回其他布局后由 `SyncMode` 重新显示。
+fn sync_keyboard_layout(context: &PollContext) -> bool {
+    let english = is_english_layout(unsafe { GetKeyboardLayout(0) });
+    if !english {
+        context.english_layout.set(false);
+        return false;
+    }
+    if context.english_layout.get() {
+        return true;
+    }
+    let Ok(mut guard) = context.engine.try_borrow_mut() else {
+        return true;
+    };
+    let Some(client) = guard.as_mut() else {
+        return true;
+    };
+    match client.ime_switched() {
+        Ok(()) => context.english_layout.set(true),
+        Err(error) => {
+            log(&format!("通知 Server 切到英语键盘布局失败: {error}"));
+            *guard = None;
+        }
+    }
+    true
+}
+
+fn is_english_layout(layout: HKL) -> bool {
+    (layout.0 as usize as u16) & 0x03ff == 0x0009
 }
 
 /// 鼠标点候选窗口上屏：与按键结果一样经异步编辑会话写进文档，剩下的拼音接着组句。
@@ -201,6 +235,20 @@ fn is_uwp_frame(window: HWND) -> bool {
     let len = unsafe { GetClassNameW(window, &mut name) };
     usize::try_from(len)
         .is_ok_and(|len| String::from_utf16_lossy(&name[..len]) == "ApplicationFrameWindow")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_english_layout;
+    use windows::Win32::UI::Input::KeyboardAndMouse::HKL;
+
+    #[test]
+    fn detects_english_keyboard_layouts() {
+        assert!(is_english_layout(HKL(0x0409usize as *mut _)));
+        assert!(is_english_layout(HKL(0x0809usize as *mut _)));
+        assert!(!is_english_layout(HKL(0x0804usize as *mut _)));
+        assert!(!is_english_layout(HKL(0x040ausize as *mut _)));
+    }
 }
 
 /// 取一次全局中英模式，顺路取回 Server 下发的按键行为设置。切模式要落定组句、会借引擎，

@@ -16,6 +16,9 @@ pub(super) struct PollContext {
     /// 拍数计数，给 [`MODE_SYNC_EVERY`](super::MODE_SYNC_EVERY) 取模。
     pub(super) ticks: Cell<u32>,
 
+    /// 当前线程是否处于独立英语键盘布局。
+    pub(super) english_layout: Cell<bool>,
+
     /// 本服务的 TSF client id：点击上屏要申请编辑会话。
     pub(super) client_id: u32,
 }

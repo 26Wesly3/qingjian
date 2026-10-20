@@ -81,6 +81,29 @@ fn status_bar_follows_mode_when_enabled() {
 }
 
 #[test]
+fn status_bar_hides_when_switching_to_an_external_english_layout() {
+    let config = RouterConfig {
+        status_enabled: true,
+        english_mode: false,
+        ..RouterConfig::default()
+    };
+    let mut router = router_with(config);
+    let recorder = RecordingStatus::default();
+    router.set_status_sink(Box::new(recorder.clone()));
+    router.handle(ClientMessage::ModeChanged {
+        session: SESSION,
+        english: false,
+    });
+    assert_eq!(recorder.calls().last(), Some(&Some("中".to_owned())));
+
+    router.handle(ClientMessage::ImeSwitched { session: SESSION });
+
+    assert_eq!(recorder.calls().last(), Some(&None));
+    assert_eq!(synced_mode(&mut router, SESSION), Some(false));
+    assert_eq!(recorder.calls().last(), Some(&Some("中".to_owned())));
+}
+
+#[test]
 fn status_bar_shows_shuangpin_scheme_in_chinese() {
     let config = RouterConfig {
         status_enabled: true,

@@ -190,6 +190,13 @@ impl<S: Read + Write> EngineClient<S> {
         })
     }
 
+    /// 当前键盘布局不再属于青简时通知 Server 收起状态条。
+    pub fn ime_switched(&mut self) -> Result<(), ClientError> {
+        self.send(&ClientMessage::ImeSwitched {
+            session: self.session,
+        })
+    }
+
     /// 任务栏图标右键菜单里点的项交给 Server。不回话。
     pub fn indicator(&mut self, command: IndicatorCommand) -> Result<(), ClientError> {
         self.send(&ClientMessage::Indicator {
