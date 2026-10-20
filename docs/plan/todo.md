@@ -138,7 +138,7 @@
   - [ ] 形码与自定义方案：Linux
   - [ ] 默认英文模式：macOS、Linux
   - [ ] 按应用记住中英模式：macOS、Linux
-  - [ ] 中文与英文、数字之间自动加空格：Windows、Linux
+  - [ ] 中文与英文、数字之间自动加空格：Linux
   - [ ] 横排时 ↑ / ↓ 展开成多行：Linux
   - [ ] 额外翻页键：macOS、Linux
   - [ ] 高亮移动键：Linux
