@@ -121,11 +121,17 @@ impl Host {
                         // 矩阵里的空位什么都不画；单行里的空位留着序号
                         index: if columns == 0 { index } else { String::new() },
                         text: String::new(),
+                        code: None,
                         annotation: Vec::new(),
                         cloud: false,
                     };
                 };
-                let mut row = Row::from_candidate(offset, candidate, self.translation_pos);
+                let mut row = Row::from_candidate(
+                    offset,
+                    candidate,
+                    self.translation_pos,
+                    self.aux_code_show,
+                );
                 row.index = index;
                 row.cloud = candidate.kind == CandidateKind::Cloud;
                 row

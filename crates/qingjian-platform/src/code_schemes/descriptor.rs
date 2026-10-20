@@ -11,7 +11,7 @@ const DEFAULT_TABLE: &str = "table.tsv";
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 #[serde(default)]
 pub(super) struct Descriptor {
-    /// 方案种类：空着或 [`super::KIND`] 是形码；`shuangpin` 是双拼方案（见 [`crate::shuangpin_schemes`]），形码这边跳过。
+    /// 方案种类：空着或 [`super::KIND`] 是形码；`shuangpin` 与 `aux` 是双拼与辅码方案（见 [`crate::shuangpin_schemes`]、[`crate::aux_schemes`]），形码这边跳过。
     #[serde(rename = "type")]
     pub kind: String,
 

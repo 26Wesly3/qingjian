@@ -118,12 +118,39 @@ impl QingjianInputController {
             }
             return self.pass_through(c, client);
         }
+        // 辅码态：字母进码段（逐键即筛），不进拼音缓冲区
+        if c.is_ascii_lowercase() && host::with(|h| h.engine.push_aux_code(c)).unwrap_or(false) {
+            self.refresh(client);
+            return true;
+        }
+        // 辅码触发键：拼音打完整了、这个键也没被双拼方案当韵母吃掉 → 进辅码态（触发键不进缓冲区）
+        if host::with(|h| h.engine.aux_trigger(c)).unwrap_or(false) {
+            host::with(|h| h.engine.enter_aux());
+            self.refresh(client);
+            return true;
+        }
+        let aux = host::with(|h| h.engine.in_aux()).unwrap_or(false);
+        if aux {
+            let (key, filtering, empty) = host::with(|h| {
+                (
+                    h.engine.aux_code_key(),
+                    !h.engine.aux_code().is_empty(),
+                    h.session.candidate(0).is_none(),
+                )
+            })
+            .unwrap_or((';', false, false));
+            // 已在辅码态再敲触发键是幂等的；码段筛空时空格、标点、数字都吞掉，停在辅码态等退格
+            if c == key || (filtering && empty) {
+                return true;
+            }
+        }
         // 表达式模式（v 开头）：数字与运算符进缓冲区，不当选词 / 翻页键
         let expression = composing && host::with(|h| h.engine.expression_mode()).unwrap_or(false);
         // 英文直输段（缓冲区里已有 `-` 这类字符）：可见字符一律追加，空格 / 回车整段原样上屏
         let raw = composing && host::with(|h| h.engine.raw_mode()).unwrap_or(false);
         // 组句中敲 `-`：进入英文直输段（`no-way`）；配成翻页键（`[general] page_keys` 选 `-=`）时才翻页
-        let hyphen = composing && !question && c == '-' && c != page_previous && c != page_next;
+        let hyphen =
+            composing && !question && !aux && c == '-' && c != page_previous && c != page_next;
         // 问字模式下敲的还可能是码点（`u4e00`、`u+1f600`）：数字与 `+` 进缓冲区而不是选词
         let unicode = question && host::with(|h| h.engine.unicode_entry()).unwrap_or(false);
         // 微软 / 搜狗双拼的 `;` 是 ing 键：末尾有落单声母时进缓冲区，其他时候还是标点
@@ -139,6 +166,7 @@ impl QingjianInputController {
             host::with(|h| h.punct_commits || h.engine.composing_code()).unwrap_or(false);
         let punctuation = composing
             && !question
+            && !aux
             && !expression
             && c.is_ascii_punctuation()
             && c != page_previous
@@ -182,7 +210,11 @@ impl QingjianInputController {
         // `[general] shift_letter = "compose"` 时进缓冲区（Core 按小写匹配、原样上屏时还原大写）
         if c.is_ascii_uppercase() {
             if host::with(|h| h.engine.shift_letter_compose()).unwrap_or(false) {
-                host::with(|h| h.engine.push(c));
+                // 码段不清会挂在变了的拼音上接着筛
+                host::with(|h| {
+                    h.engine.clear_aux();
+                    h.engine.push(c);
+                });
                 self.refresh(client);
                 return true;
             }

@@ -108,6 +108,11 @@ if [[ -f data/generated/dict.tsv || -f data/generated/dict.qj ]]; then
     cp data/generated/dicts/*.qj "$APP/Contents/Resources/dicts/"
   fi
   [[ -f data/generated/lm.qj ]] && cp data/generated/lm.qj "$APP/Contents/Resources/"
+  # 随包辅码码表（笔画，CNS11643 筆順資料派生，需署名）放 Resources/codes/，与 Windows 的 data\generated\codes 同一份
+  if ls data/generated/codes/*.qj >/dev/null 2>&1; then
+    mkdir -p "$APP/Contents/Resources/codes"
+    cp data/generated/codes/*.qj assets/stroke/LICENSE-CNS11643.txt "$APP/Contents/Resources/codes/"
+  fi
   # 含章·知微（字级 Transformer）：三件套与单文件放 data/models/hanzhang-zhiwei/。
   model_dir="${QINGJIAN_MODEL_DIR:-data/models/hanzhang-zhiwei}"
   if [[ -f "$model_dir/model.safetensors" ]]; then

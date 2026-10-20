@@ -80,7 +80,7 @@ impl Feature {
     fn table(self) -> [Status; 3] {
         use Status::{NotApplicable as No, Planned as Todo, Supported as Yes};
         match self {
-            Self::AuxCode => [Todo, Yes, Todo],
+            Self::AuxCode => [Yes, Yes, Todo],
             Self::Schemes => [Yes, Yes, Todo],
             // macOS 用 Caps Lock，由系统决定；Linux 的切换键在 Fcitx5 的设置里
             Self::SwitchKeys => [No, Yes, No],

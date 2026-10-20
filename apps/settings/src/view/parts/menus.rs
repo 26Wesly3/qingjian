@@ -25,6 +25,7 @@ pub fn anchor(popup: Popup) -> &'static str {
         Popup::Kaomoji => "kaomoji",
         Popup::Symbols => "symbols",
         Popup::KeyHint => "key-hint",
+        Popup::AuxScheme => "aux-scheme",
     }
 }
 
@@ -141,6 +142,20 @@ pub fn menu(
                         .position(|variant| *variant == current),
                 )
             }
+            Popup::AuxScheme => {
+                let aux = &page.settings.config.aux_code;
+                let options = page.settings.library.aux_options();
+                let ids: Vec<String> = options.iter().map(|entry| entry.stem.clone()).collect();
+                let selected = aux
+                    .pick(ids.iter().map(String::as_str))
+                    .and_then(|id| ids.iter().position(|option| option == id));
+                (
+                    "scheme",
+                    options.iter().map(|entry| entry.name.clone()).collect(),
+                    strings(ids),
+                    selected,
+                )
+            }
             Popup::KeyHint => (
                 "key_hint",
                 KeyHintMode::ALL
@@ -176,13 +191,17 @@ pub fn menu(
                 )
             }
         };
+    let section = match popup {
+        Popup::AuxScheme => "aux_code",
+        _ => "general",
+    };
     let items: Vec<&str> = labels.iter().map(String::as_str).collect();
     Menu::new(&items, selected, rect, window)
         .build(
             ui,
             &page.theme,
             "menu",
-            move |index| Message::set("general", key, values[index].clone()),
+            move |index| Message::set(section, key, values[index].clone()),
             Message::CloseMenu,
         )
         .map(Some)

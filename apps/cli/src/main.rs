@@ -63,7 +63,7 @@ fn run() -> Result<(), CliError> {
     // 查码：只看码表，不查词、不进交互
     if !args.aux_query.is_empty() {
         for word in &args.aux_query {
-            let codes: Vec<&str> = engine
+            let codes: Vec<_> = engine
                 .aux_codes()
                 .iter()
                 .flat_map(|table| table.codes_of(word))
@@ -378,7 +378,13 @@ fn build_engine(args: &Args) -> Result<Engine, CliError> {
     if !args.aux_table.is_empty() {
         let mut tables: Vec<Arc<dyn AuxCodeLookup>> = Vec::new();
         for path in &args.aux_table {
-            let table = AuxCodeTable::from_path(path)?;
+            let table = if path.is_dir() {
+                let scheme = qingjian_platform::aux_schemes::from_dir(path)
+                    .ok_or_else(|| CliError::AuxScheme(path.to_owned()))?;
+                AuxCodeTable::from_path(&scheme.table)?.with_word_rules(scheme.words)
+            } else {
+                AuxCodeTable::from_path(path)?
+            };
             tracing::info!(
                 path = %path.display(),
                 entries = table.len(),

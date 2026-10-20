@@ -41,6 +41,10 @@ pub enum CliError {
     #[error("{0} is not a usable shuangpin scheme directory")]
     ShuangpinScheme(std::path::PathBuf),
 
+    /// `--aux-table` 给的目录不是能用的辅码方案（没写 `type = "aux"`、码表不在或词码规则写错了，详情在日志里）。
+    #[error("{0} is not a usable aux code scheme directory")]
+    AuxScheme(std::path::PathBuf),
+
     #[error(transparent)]
     Predict(#[from] PredictError),
 

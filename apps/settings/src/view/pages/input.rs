@@ -14,7 +14,7 @@ use crate::shortcut::Shortcut;
 use crate::support::Feature;
 use crate::view::Page;
 use crate::view::parts::controls::{select, toggle_info, toggle_with};
-use crate::view::parts::lists::{entry_row, import_row, toggle_disabled};
+use crate::view::parts::lists::{entry_row, import_row};
 use crate::view::parts::menus::{CODE_OFF, scheme_options};
 
 /// 模糊音的九条：配置键、界面名。
@@ -222,6 +222,7 @@ fn aux_code(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErro
             general.aux_code_keep_empty,
             !aux.enabled,
         )?,
+        aux_scheme(ui, page)?,
         shortcuts::recorder(
             ui,
             page,
@@ -240,15 +241,14 @@ fn aux_code(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErro
         .iter()
         .map(|entry| (entry, false))
         .chain(library.codes.iter().map(|entry| (entry, true)))
+        .chain(library.aux_schemes.iter().map(|entry| (entry, false)))
     {
-        let toggle = toggle_disabled(Kind::CodeTable, &aux.disabled, &entry.stem);
         rows.push(entry_row(
             ui,
             page,
             Kind::CodeTable,
             entry,
-            aux.is_enabled(&entry.stem),
-            toggle,
+            None,
             removable,
         )?);
     }
@@ -262,6 +262,29 @@ fn aux_code(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErro
     out.push(section_title(ui, theme, "码表")?);
     out.push(group(ui, theme, &rows)?);
     Ok(out)
+}
+
+/// 同一时间只用一套辅码：下拉框里列随包的、导入的与方案，选的没了时显示输入法实际退回的那套。
+fn aux_scheme(ui: &mut Ui<Message>, page: &Page) -> Result<NodeId, RenderError> {
+    let aux = &page.settings.config.aux_code;
+    let options = page.settings.library.aux_options();
+    let names: Vec<&str> = options.iter().map(|entry| entry.name.as_str()).collect();
+    let current = aux
+        .pick(options.iter().map(|entry| entry.stem.as_str()))
+        .and_then(|id| options.iter().find(|entry| entry.stem == id))
+        .map_or_else(|| "没有码表".to_owned(), |entry| entry.name.clone());
+    let control = select(
+        ui,
+        page,
+        Popup::AuxScheme,
+        (&current, &names),
+        160.0,
+        !aux.enabled || options.is_empty(),
+    )?;
+    SettingRow::new("辅码方案")
+        .info("同一时间用一套；导入的码表和数据目录 schemes 文件夹里的辅码方案都在这里选")
+        .control(control)
+        .build(ui, &page.theme)
 }
 
 /// 九个勾选排成三列。

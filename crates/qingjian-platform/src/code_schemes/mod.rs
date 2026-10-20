@@ -121,7 +121,7 @@ fn read(dir: &Path, bundled: bool) -> Option<CodeSchemeEntry> {
     };
     match descriptor.kind.as_str() {
         "" | KIND => {}
-        crate::shuangpin_schemes::KIND => return None,
+        crate::shuangpin_schemes::KIND | crate::aux_schemes::KIND => return None,
         kind => {
             tracing::warn!(file = %path.display(), kind, "不认识的方案种类，跳过");
             return None;

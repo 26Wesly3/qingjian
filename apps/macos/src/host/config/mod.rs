@@ -37,6 +37,16 @@ impl Host {
             .set_shift_letter_compose(config.general.shift_letter.compose());
         self.apply_scheme(&config);
         self.engine
+            .set_aux_code_key(config.general.aux_code_key(), config.general.page_keys());
+        self.engine
+            .set_aux_keep_empty(config.general.aux_code_keep_empty);
+        self.engine.set_aux_enabled(config.aux_code.enabled);
+        self.engine.set_aux_show(config.general.aux_code_show);
+        self.aux_code_show = config.general.aux_code_show;
+        if force || self.applied_aux_code.as_ref() != Some(&config.aux_code) {
+            self.reload_aux_codes();
+        }
+        self.engine
             .set_shuangpin_raw_preedit(config.general.shuangpin_raw_preedit);
         self.engine.set_learning(config.general.learning);
         logging::set_level(config.general.log_level);
@@ -203,6 +213,7 @@ impl Host {
         if self.settings.reload_if_changed() {
             self.apply_config(false);
         }
+        self.reload_aux_codes_if_changed();
     }
 
     /// 激活期间的定时器每秒调一次：看配置文件，再看学习数据要不要落盘。

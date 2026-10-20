@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime};
 
 use qingjian_core::{Engine, Language, NoGlossFiller, NoPredictor, NoTranslator};
-use qingjian_platform::{Config, code_tables};
+use qingjian_platform::Config;
 use qingjian_predict::{API_USAGE_FILE, CloudGlossFiller, CloudPredictor, PredictConfig};
 
 pub(super) use self::state::ConfigReload;
@@ -184,7 +184,7 @@ impl Router {
             reload.last_mtime = current;
             changed
         };
-        // 用户 `codes/` 下的文件增删或更新（设置页刚导入 / 移除一张码表）：不必等配置改动，下一拍就生效
+        // 用户 `codes/` 或 `schemes/` 下的文件增删或更新（设置页刚导入 / 移除一张码表、改了辅码方案）：不必等配置改动，下一拍就生效
         let codes_changed = {
             let current = reload.dirs.code_snapshot();
             let changed = current != reload.code_files;
@@ -299,11 +299,7 @@ impl Router {
         let Some(reload) = &self.reload else {
             return;
         };
-        let tables = code_tables::load(
-            reload.dirs.bundled_codes.as_deref(),
-            reload.dirs.user_codes.as_deref(),
-            &reload.applied_aux_code,
-        );
+        let tables = reload.dirs.aux_sources().load(&reload.applied_aux_code);
         if let Some(reload) = &mut self.reload {
             reload.code_files = reload.dirs.code_snapshot();
         }

@@ -15,4 +15,6 @@ pub enum Popup {
     Symbols,
     /// 双拼键位提示什么时候弹出。
     KeyHint,
+    /// 用哪一套辅码。
+    AuxScheme,
 }

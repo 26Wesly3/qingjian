@@ -1,5 +1,7 @@
 //! 拼音侧的候选生成：切分、拼写纠错、词级查找与排序，再补上整句、英文、快捷与 emoji 候选。
 
+use std::borrow::Cow;
+
 use super::*;
 
 impl Engine {
@@ -175,10 +177,10 @@ impl Engine {
                 } else {
                     None
                 };
-                chinese_candidate(&item, first)
+                chinese_candidate(&item, first.as_deref())
             })),
             Some(code) => {
-                let mut kept: Vec<(usize, &str)> = scored
+                let mut kept: Vec<(usize, Cow<'_, str>)> = scored
                     .iter()
                     .enumerate()
                     .filter_map(|(index, item)| {
@@ -193,7 +195,7 @@ impl Engine {
                 });
                 items.extend(
                     kept.into_iter()
-                        .map(|(index, hit)| chinese_candidate(&scored[index], Some(hit))),
+                        .map(|(index, hit)| chinese_candidate(&scored[index], Some(&hit))),
                 );
             }
         }

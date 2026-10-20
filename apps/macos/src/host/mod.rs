@@ -5,6 +5,7 @@
 //! 配置只有一条通路：[`Host::apply_config`] 把当前 `Config` 推给 Engine 与界面。启动、菜单开关、
 //! 设置窗口、手改文件被监视到，全都走它；三个入口都只写 `config.toml`，不各存一套状态。
 
+mod aux_code;
 mod cloud;
 mod config;
 mod diagnostics;
@@ -30,10 +31,10 @@ use qingjian_learning::{FrequencyLearner, InputLog, UsageStats, VocabularyBook};
 use qingjian_lm::BigramModel;
 use qingjian_platform::extra_dictionaries;
 use qingjian_platform::{
-    Appearance, AppsConfig, CandidateRenderer, DEFAULT_ENGLISH_CANDIDATES_ON, DictionariesConfig,
-    GeneralConfig, HighlightKeys, KeyCombo, KeyHintMode, LEARNING_LANGUAGE_OFF, LayoutMode,
-    LocalModelConfig, LogLevel, Modifiers, PAGE_KEY_OPTIONS, PreeditMode, Scheme, ShortcutConfig,
-    UpdateChannel,
+    Appearance, AppsConfig, AuxCodeConfig, CandidateRenderer, DEFAULT_ENGLISH_CANDIDATES_ON,
+    DictionariesConfig, GeneralConfig, HighlightKeys, KeyCombo, KeyHintMode, LEARNING_LANGUAGE_OFF,
+    LayoutMode, LocalModelConfig, LogLevel, Modifiers, PAGE_KEY_OPTIONS, PreeditMode, Scheme,
+    ShortcutConfig, UpdateChannel,
 };
 use qingjian_predict::{
     API_USAGE_FILE, CloudGlossFiller, CloudPredictor, ConnectionTest, PredictConfig, PredictError,
@@ -89,6 +90,15 @@ pub struct Host {
 
     /// 附加词库是按哪份 `[dictionaries]` 装的；开关变了才重新加载。
     applied_dictionaries: DictionariesConfig,
+
+    /// 辅码码表是按哪份 `[aux_code]` 装的；还没装过为 `None`。
+    applied_aux_code: Option<AuxCodeConfig>,
+
+    /// 上次装码表时用户 `codes/` 与 `schemes/` 的文件快照：设置程序导入或改了方案，下一次看配置时就重装。
+    aux_files: Vec<(PathBuf, Option<std::time::SystemTime>, u64)>,
+
+    /// 候选词后面带上辅码（配置 `[general] aux_code_show`）。
+    pub aux_code_show: bool,
 
     /// 偏好设置「词库」页显示的列表，勾选框 / 移除按钮的下标对着它。
     dictionary_list: Vec<DictionaryInfo>,
