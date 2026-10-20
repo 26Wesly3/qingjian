@@ -103,7 +103,7 @@ impl Feature {
             Self::CloudRequestControls => [Todo, Yes, Todo],
             // Linux 还没接释义兜底
             Self::VocabularyTranslation => [Yes, Yes, Todo],
-            Self::KeyHint => [Yes, Todo, Todo],
+            Self::KeyHint => [Yes, Yes, Todo],
         }
     }
 

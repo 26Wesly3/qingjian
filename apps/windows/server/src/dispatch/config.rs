@@ -2,7 +2,7 @@ use qingjian_core::TraditionalVariant;
 use qingjian_platform::protocol::KeyModifiers;
 use qingjian_platform::{
     Appearance, AppsConfig, CandidateRenderer, Config, FontSize, HighlightKeys, KeyCombo,
-    LayoutMode, PageKeys, PreeditMode, Scheme, SwitchKeys,
+    KeyHintMode, LayoutMode, PageKeys, PreeditMode, Scheme, SwitchKeys,
 };
 
 use super::RenderSettings;
@@ -132,6 +132,12 @@ pub struct RouterConfig {
 
     /// 译词旁是否显示词性标注（`[general] translation_pos`）。随帧下发给候选窗。
     pub translation_pos: bool,
+
+    /// 键位提示（`[general] key_hint`）。
+    pub key_hint: KeyHintMode,
+
+    /// 键位提示窗口的不透明度与键盘大小，百分比（`[general] key_hint_opacity` / `key_hint_size`，已夹到范围内）。
+    pub key_hint_look: (u8, u8),
 }
 
 impl RouterConfig {
@@ -207,6 +213,11 @@ impl From<&Config> for RouterConfig {
             aux_code_key: config.general.aux_code_key(),
             aux_code_show: config.general.aux_code_show,
             translation_pos: config.general.translation_pos,
+            key_hint: config.general.key_hint,
+            key_hint_look: (
+                config.general.key_hint_opacity.clamp(30, 100),
+                config.general.key_hint_size.clamp(60, 150),
+            ),
         }
     }
 }

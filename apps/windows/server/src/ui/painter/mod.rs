@@ -129,6 +129,11 @@ impl Painter {
             .flatten()
     }
 
+    /// 当前主题（浅色那一份），键位提示窗口按它画键盘。
+    pub(super) fn theme(&self) -> &Theme {
+        &self.theme
+    }
+
     /// 候选窗收起：忘掉上一帧，下次显示不从旧位置过渡。
     pub(super) fn forget(&mut self) {
         self.renderer.forget();

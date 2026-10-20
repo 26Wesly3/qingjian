@@ -7,6 +7,7 @@ mod candidates;
 mod composed;
 mod config;
 mod key;
+mod key_hint;
 mod message;
 mod mode;
 mod panel;
@@ -31,6 +32,8 @@ use qingjian_render::Mode;
 pub use self::candidates::{CandidateSink, NoopSink, RenderSettings};
 use self::composed::Composed;
 pub use self::config::RouterConfig;
+use self::key_hint::KeyHintState;
+pub use self::key_hint::{KeyHintContent, KeyHintView};
 use self::panel::PanelGrid;
 pub use self::panel::{PanelCell, PanelFrame, PanelMouse};
 use self::reload::ConfigReload;
@@ -118,7 +121,7 @@ pub struct Router {
     last_rect: Option<ScreenRect>,
 
     /// 上次真正显示的帧与位置：没变就不重画（组字期间的空转 Poll 很多）。
-    last_shown: Option<(Frame, Mode, ScreenRect)>,
+    last_shown: Option<(Frame, Mode, ScreenRect, Option<KeyHintView>)>,
 
     /// 符号面板当前分类的格子；面板没开时为 `None`。
     panel: Option<PanelGrid>,
@@ -147,6 +150,9 @@ pub struct Router {
 
     /// 重排的防抖 / 轮询进行态。
     rescore: RescoreState,
+
+    /// 键位提示「卡住时显示」的进行态。
+    key_hint: KeyHintState,
 }
 
 impl Router {
@@ -189,6 +195,7 @@ impl Router {
             applied_model: LocalModelConfig::default(),
             surrounding_before: String::new(),
             rescore: RescoreState::default(),
+            key_hint: KeyHintState::default(),
         }
     }
 
