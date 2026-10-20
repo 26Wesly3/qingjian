@@ -140,11 +140,11 @@
   - [ ] 按应用记住中英模式：macOS、Linux
   - [ ] 中文与英文、数字之间自动加空格：Linux
   - [ ] 横排时 ↑ / ↓ 展开成多行：Linux
-  - [ ] 额外翻页键：macOS、Linux
+  - [ ] 额外翻页键：Linux
   - [ ] 高亮移动键：Linux
-  - [ ] Ctrl + . 切换全半角标点：macOS、Linux
+  - [ ] Ctrl + . 切换全半角标点：Linux
   - [ ] 云服务用量统计：Linux
-  - [ ] 按需云联想与请求节奏：macOS、Linux
+  - [ ] 按需云联想与请求节奏：Linux
   - [ ] 生词本整句翻译：Linux
   - [ ] 双拼键位提示：Linux
 

@@ -95,6 +95,18 @@ impl Host {
         }
     }
 
+    /// 标点切换键：翻转中文模式的全半角标点，落盘后热加载。英文模式一律半角，调用方不在英文模式下调。
+    pub fn toggle_punctuation(&mut self) {
+        let full_width = !self.settings.config().general.full_width_punctuation;
+        tracing::debug!(full_width, "切换全角标点");
+        if self
+            .settings
+            .set_bool("general", "full_width_punctuation", full_width)
+        {
+            self.apply_config(false);
+        }
+    }
+
     /// 设置窗口里改了一个控件：写配置、热加载；写不成（非法组合、空文本）也要把控件同步回真实值。
     pub fn change_setting(&mut self, setting: Setting, value: SettingValue) {
         // 密钥值不进日志

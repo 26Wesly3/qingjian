@@ -93,14 +93,14 @@ impl Feature {
             // macOS 看菜单栏图标，Linux 看 Fcitx5 的托盘
             Self::StatusBar => [No, Yes, No],
             Self::HorizontalGrid => [Yes, Yes, Todo],
-            Self::ExtraPageKeys => [Todo, Yes, Todo],
+            Self::ExtraPageKeys => [Yes, Yes, Todo],
             Self::HighlightKeys => [Yes, Yes, Todo],
-            Self::TogglePunctuation => [Todo, Yes, Todo],
+            Self::TogglePunctuation => [Yes, Yes, Todo],
             // 系统的文本替换只有 macOS 有
             Self::SystemTextReplacements => [Yes, No, No],
             // Linux 已接云服务，尚未记录云服务用量
             Self::ApiUsage => [Yes, Yes, Todo],
-            Self::CloudRequestControls => [Todo, Yes, Todo],
+            Self::CloudRequestControls => [Yes, Yes, Todo],
             // Linux 还没接释义兜底
             Self::VocabularyTranslation => [Yes, Yes, Todo],
             Self::KeyHint => [Yes, Yes, Todo],

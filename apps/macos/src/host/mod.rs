@@ -33,8 +33,8 @@ use qingjian_platform::extra_dictionaries;
 use qingjian_platform::{
     Appearance, AppsConfig, AuxCodeConfig, CandidateRenderer, DEFAULT_ENGLISH_CANDIDATES_ON,
     DictionariesConfig, GeneralConfig, HighlightKeys, KeyCombo, KeyHintMode, LEARNING_LANGUAGE_OFF,
-    LayoutMode, LocalModelConfig, LogLevel, Modifiers, PAGE_KEY_OPTIONS, PreeditMode, Scheme,
-    ShortcutConfig, UpdateChannel,
+    LayoutMode, LocalModelConfig, LogLevel, Modifiers, PAGE_KEY_OPTIONS, PageKeys, PreeditMode,
+    Scheme, ShortcutConfig, UpdateChannel,
 };
 use qingjian_predict::{
     API_USAGE_FILE, CloudGlossFiller, CloudPredictor, ConnectionTest, PredictConfig, PredictError,
@@ -124,6 +124,9 @@ pub struct Host {
     /// 翻页键对（上一页、下一页）。
     pub page_keys: (char, char),
 
+    /// 和主翻页键一起用的额外翻页键（配置 `[shortcut] extra_page_keys`）。
+    pub extra_page_keys: PageKeys,
+
     /// 组句中敲会转全角的标点先把高亮候选上屏、再补该标点（配置 `[general] punct_commits`，缺省关）。
     pub punct_commits: bool,
 
@@ -144,6 +147,15 @@ pub struct Host {
 
     /// 翻译选中文字的快捷键（配置 `[shortcut] translate_selection`）。
     pub translate_keys: KeyCombo,
+
+    /// 切换全半角标点的组合键（配置 `[shortcut] toggle_punctuation`，缺省没有）。
+    pub punctuation_keys: Option<KeyCombo>,
+
+    /// 组句中按需联想的组合键（配置 `[shortcut] predict`）。
+    pub predict_keys: KeyCombo,
+
+    /// 在飞的按需联想请求序号：结果到了排在第一页最前面，自动联想的照旧补在末尾。
+    manual_prediction: Option<u64>,
 
     /// 进行中的「翻译选中文字」；有它时候选窗口显示的是译文（或「翻译中…」），按键先归它处理。
     pub translation: Option<TranslationJob>,
