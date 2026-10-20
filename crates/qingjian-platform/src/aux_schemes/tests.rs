@@ -108,3 +108,34 @@ fn the_snapshot_sees_files_inside_scheme_folders() {
     assert!(before.is_empty());
     assert_eq!(after.len(), 2);
 }
+
+#[test]
+fn the_bundled_stroke_table_derives_words_it_does_not_list() {
+    let root = scratch("stroke");
+    let bundled = root.join("codes");
+    std::fs::create_dir_all(&bundled).unwrap();
+    let table =
+        qingjian_dictionary::AuxCodeTable::parse("开\thpsnz\n发\tzpnn\n展\tzhpn\n开发\thz\n")
+            .unwrap();
+    table
+        .write_qj(&bundled.join("stroke.qj"), &Default::default())
+        .unwrap();
+    let sources = AuxCodeSources {
+        bundled_codes: Some(bundled),
+        ..AuxCodeSources::default()
+    };
+
+    let tables = sources.load(&AuxCodeConfig::default());
+    assert_eq!(
+        tables[0].code_with_prefix("开发", "").as_deref(),
+        Some("hz")
+    );
+    assert_eq!(
+        tables[0].code_with_prefix("开展", "").as_deref(),
+        Some("hz")
+    );
+    assert_eq!(
+        tables[0].code_with_prefix("开发展开", "").as_deref(),
+        Some("hzzh")
+    );
+}

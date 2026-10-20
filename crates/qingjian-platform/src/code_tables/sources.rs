@@ -6,7 +6,7 @@ use std::time::SystemTime;
 
 use qingjian_dictionary::{AuxCodeLookup, AuxCodeTable};
 
-use super::AuxSource;
+use super::{AuxSource, STROKE, stroke_word_rules};
 use crate::AuxCodeConfig;
 use crate::aux_schemes;
 use crate::code_schemes::DIR;
@@ -64,6 +64,9 @@ impl AuxCodeSources {
             return Vec::new();
         };
         let loaded = match source {
+            AuxSource::File(path) if id == STROKE && self.is_bundled(path) => {
+                AuxCodeTable::open(path).map(|table| table.with_word_rules(stroke_word_rules()))
+            }
             AuxSource::File(path) => AuxCodeTable::open(path),
             AuxSource::Scheme(scheme) => AuxCodeTable::from_path(&scheme.table)
                 .map(|table| table.with_word_rules(scheme.words.clone())),
@@ -78,6 +81,12 @@ impl AuxCodeSources {
                 Vec::new()
             }
         }
+    }
+
+    fn is_bundled(&self, path: &std::path::Path) -> bool {
+        self.bundled_codes
+            .as_deref()
+            .is_some_and(|dir| path.parent() == Some(dir))
     }
 
     /// 用户这边码表的快照（路径、mtime、长度）：`codes/` 里的 `.qj` 与 `schemes/` 下每个方案目录里的文件。
