@@ -130,6 +130,7 @@ impl Router {
                     full_width: self.full_width_for(english),
                     appearance: self.config.appearance,
                     anchor: self.config.status_pos,
+                    size: self.config.status_size,
                     mode: self.input_mode(),
                 });
             }

@@ -410,7 +410,7 @@ impl Theme {
         self.animations
     }
 
-    /// 设置里的候选字号相对主题的比例：表格行高与状态条整体跟着它缩放。
+    /// 设置里的候选字号相对主题的比例：表格行高与键位提示键盘跟着它缩放。
     pub(crate) fn candidate_scale(&self) -> f32 {
         self.sizes.ratio("candidate", |name| self.theme_size(name))
     }

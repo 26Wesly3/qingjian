@@ -139,16 +139,18 @@ impl Painter {
         self.renderer.forget();
     }
 
-    /// 画状态条。
+    /// 画状态条；`size` 是设置里的大小（百分比）。
     pub(super) fn render_status(
         &mut self,
         cells: &[StatusCell],
         mode: &Mode,
         dark: bool,
         dpi: u32,
+        size: u8,
     ) -> Option<RenderedStatus> {
+        let scale = scale(dpi) * f32::from(size) / 100.0;
         self.renderer
-            .render_status(cells, mode, &self.theme.with_dark(dark), scale(dpi))
+            .render_status(cells, mode, &self.theme.with_dark(dark), scale)
             .inspect_err(|error| tracing::warn!(%error, "状态条渲染失败"))
             .ok()
     }

@@ -2,9 +2,7 @@
 
 use bamboo_slip::taffy::LengthPercentage;
 use bamboo_slip::taffy::{Dimension, FlexDirection, FlexWrap, NodeId, Rect, Size, Style};
-use bamboo_slip::{
-    Checkbox, RenderError, SettingRow, Slider, Switch, Ui, Visual, group, section_title,
-};
+use bamboo_slip::{Checkbox, RenderError, SettingRow, Switch, Ui, Visual, group, section_title};
 use qingjian_platform::{KeyHintMode, Scheme, code_schemes};
 
 use super::shortcuts;
@@ -13,7 +11,7 @@ use crate::message::{Message, Popup};
 use crate::shortcut::Shortcut;
 use crate::support::Feature;
 use crate::view::Page;
-use crate::view::parts::controls::{select, toggle_info, toggle_with};
+use crate::view::parts::controls::{percent_slider, select, toggle_info, toggle_with};
 use crate::view::parts::lists::{entry_row, import_row};
 use crate::view::parts::menus::{CODE_OFF, scheme_options};
 
@@ -150,7 +148,7 @@ fn key_hint(ui: &mut Ui<Message>, page: &Page) -> Result<[NodeId; 3], RenderErro
     let size = percent_slider(
         ui,
         page,
-        ("键位提示大小", "key_hint_size"),
+        ("键位提示大小", ("general", "key_hint_size")),
         general.key_hint_size(),
         (60.0, 150.0),
         off,
@@ -158,35 +156,12 @@ fn key_hint(ui: &mut Ui<Message>, page: &Page) -> Result<[NodeId; 3], RenderErro
     let opacity = percent_slider(
         ui,
         page,
-        ("键位提示透明度", "key_hint_opacity"),
+        ("键位提示透明度", ("general", "key_hint_opacity")),
         general.key_hint_opacity(),
         (30.0, 100.0),
         off,
     )?;
     Ok([mode, size, opacity])
-}
-
-/// 一行百分比滑块，步长 5%：`ratio` 是当前倍数（1 为 100%），拖到的值按整数百分比写进 `[general]`。
-fn percent_slider(
-    ui: &mut Ui<Message>,
-    page: &Page,
-    (title, key): (&str, &'static str),
-    ratio: f32,
-    (min, max): (f32, f32),
-    disabled: bool,
-) -> Result<NodeId, RenderError> {
-    let percent = (ratio * 100.0).round();
-    let text = format!("{percent:.0}%");
-    let slider = Slider::new(percent, min, max)
-        .step(5.0)
-        .label(&text)
-        .disabled(disabled)
-        .build(ui, &page.theme, key, move |value| {
-            Message::set("general", key, value.round() as i64)
-        })?;
-    SettingRow::new(title)
-        .control(slider)
-        .build(ui, &page.theme)
 }
 
 /// 辅码：开关、显示、触发键，再一组码表（随包的、导入的、导入按钮）。

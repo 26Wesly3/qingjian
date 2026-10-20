@@ -118,6 +118,9 @@ pub struct RouterConfig {
     /// 状态条记住的位置（`[status_bar] x` / `y`，内容左上角物理像素）。
     pub status_pos: Option<(i32, i32)>,
 
+    /// 状态条大小（`[status_bar] size`，百分比，已收到 60–150）。
+    pub status_size: u8,
+
     /// 拼音侧方案（`[general] scheme`）。
     pub scheme: Scheme,
 
@@ -208,6 +211,7 @@ impl From<&Config> for RouterConfig {
             predict: config.shortcut.predict,
             status_enabled: config.status_bar.enabled,
             status_pos: config.status_bar.x.zip(config.status_bar.y),
+            status_size: config.status_bar.size.clamp(60, 150),
             scheme: config.general.scheme(),
             traditional: config.general.traditional() != TraditionalVariant::Off,
             aux_code_key: config.general.aux_code_key(),
