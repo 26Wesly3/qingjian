@@ -13,6 +13,7 @@ use crate::emoji::{EmojiTable, builtin, is_emoji};
 use crate::engine::decoded::EngineDecoded;
 use crate::fuzzy::FuzzyRules;
 use crate::history::InputHistory;
+use crate::panel::PanelHistory;
 use crate::sentence::{Interpolation, LanguageModel, Personal, SentenceScorer};
 use crate::shuangpin::{Layout, Scheme};
 use crate::traditional::{Traditional, TraditionalVariant};
@@ -114,6 +115,16 @@ impl Engine {
     /// 目前是否處於注音模式。
     pub fn is_zhuyin_mode(&self) -> bool {
         self.zhuyin
+    }
+
+    /// 九宫格方案开关（手机 9 键）。与双拼、注音一样是输入方案，不是模式。
+    pub fn set_nine_key(&mut self, on: bool) {
+        self.nine_key = on;
+        self.forget_span_cache();
+    }
+
+    pub fn is_nine_key(&self) -> bool {
+        self.nine_key
     }
 
     /// 设繁体输出：候选与上屏文本在出 Core 时换成繁体，词库与学习数据仍是简体（见 [`crate::traditional`]）。
@@ -429,6 +440,11 @@ impl Engine {
         self.english_mode
     }
 
+    /// 随包英文词表（不含用户打过的词）；没装是 `None`。
+    pub fn english_words(&self) -> Option<&WordList> {
+        self.english.as_ref()
+    }
+
     pub fn with_english(mut self, words: WordList) -> Self {
         self.english = Some(words);
         self
@@ -524,9 +540,21 @@ impl Engine {
         self.logger.inner_mut()
     }
 
+    /// 符号面板「常用」按这份记录排，从面板上屏的条目记进去（见 [`Self::commit`]）。
+    pub fn with_panel_history(mut self, history: Box<dyn PanelHistory>) -> Self {
+        self.panel_history = history;
+        self
+    }
+
     pub fn with_usage_meter(mut self, meter: Box<dyn UsageMeter>) -> Self {
         self.meter = meter;
         self
+    }
+
+    /// 上屏记不记进输入统计。壳把输入引到自己的工具框（快捷翻译的原文、常用语编辑框）时关掉：
+    /// 那些字不进应用，算进「打了多少字」就虚高了；学习照常（选词是真的）。
+    pub fn set_metered(&mut self, metered: bool) {
+        self.metered = metered;
     }
 
     /// 输入统计的汇总（偏好设置「统计」页）。

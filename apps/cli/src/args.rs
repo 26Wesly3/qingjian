@@ -94,6 +94,10 @@ pub struct Args {
     #[arg(long)]
     pub shuangpin: Option<String>,
 
+    /// 九宫格方案：输入写数字键（`64426` → 你好），验证手机 9 键的候选与整句
+    #[arg(long)]
+    pub nine_key: bool,
+
     /// 形码：码表 TSV（`词\t编码\t词频`，按 86 五笔记日志、按键规则全关）或方案目录（`scheme.toml` + 码表）。
     /// 给了就开着形码；`--wubi` 是旧写法
     #[arg(long, alias = "wubi", value_name = "码表或方案目录")]
