@@ -58,6 +58,7 @@ impl Engine {
                     typed_display: decoded.as_ref().map(|d| d.marked()),
                     correction: None,
                     aux: None,
+                    held: String::new(),
                     timings: Timings {
                         parse: start.elapsed(),
                         lookup: Duration::ZERO,
@@ -249,6 +250,7 @@ impl Engine {
             typed_display,
             correction,
             aux: self.aux_segment(),
+            held: String::new(),
             timings: Timings {
                 parse,
                 lookup,

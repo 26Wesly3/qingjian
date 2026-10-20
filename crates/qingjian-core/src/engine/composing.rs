@@ -198,6 +198,7 @@ impl Engine {
     /// 退格。辅码态里删的是码段：删掉最后一个码字母；删空时按「码删空后留在辅码态」开关分岔——
     /// 开（缺省）停在辅码态（`;` 仍在、无码词也回来），关则回拼音态。码段本来就空（刚触发，或删空停住）
     /// 时按退格 = 退出辅码态、拼音一个字符都不动。每次退格候选都当场重筛。
+    /// 前面有选好还没上屏的词时，退格先撤回最后一次选择（那段拼音接回来），都撤完了才删字母。
     pub fn backspace(&mut self) -> bool {
         if let Some(code) = self.aux_code.take() {
             if code.len() > 1 {
@@ -207,12 +208,16 @@ impl Engine {
             }
             return true;
         }
+        if self.undo_selection() {
+            return true;
+        }
         self.note_edit();
         self.composition.backspace()
     }
 
     pub fn clear(&mut self) {
         self.composition.clear();
+        self.held.clear();
         self.panel = None;
         self.aux_code = None;
         self.chain.leave_buffer();
@@ -343,6 +348,7 @@ impl Engine {
     /// 用一段完整拼音替换当前缓冲区，供 CLI 和测试一次性喂入。
     pub fn set_input(&mut self, input: &str) {
         self.composition.clear();
+        self.held.clear();
         for c in input.chars() {
             self.push(c);
         }
@@ -360,11 +366,12 @@ impl Engine {
             *self.correction_cache.borrow_mut() = None;
         }
         let raw = self.raw_preedit().text;
+        let held = self.take_held();
         if raw.is_empty() {
             // 壳在回车 / 失焦时不管有没有在组句都会来一趟：空的不记日志、不计统计
             self.clear();
             self.chain.reset();
-            return raw;
+            return held;
         }
         self.log_commit(&raw, &raw, InputSource::Raw);
         // 原样上屏的是个英文词（`gist`）：记进个人英文词表，下次直接出候选。
@@ -386,7 +393,11 @@ impl Engine {
         self.punctuation.note_committed(&raw);
         self.note_text(&raw);
         self.chain.reset();
-        if lead { format!(" {raw}") } else { raw }
+        if lead {
+            format!("{held} {raw}")
+        } else {
+            held + &raw
+        }
     }
 }
 

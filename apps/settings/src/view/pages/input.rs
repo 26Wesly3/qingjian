@@ -67,6 +67,15 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
             false,
         )?);
     }
+    rows.push(toggle_info(
+        ui,
+        page,
+        "分次选词先不上屏",
+        Some("一段拼音分几次选时，先选的词留在输入框里，整段选完再上屏；选错了按退格撤回重选"),
+        ("general", "hold_selections"),
+        general.hold_selections,
+        false,
+    )?);
     if Feature::Schemes.here() {
         let schemes = &page.settings.library.code_schemes;
         let code = general.code();

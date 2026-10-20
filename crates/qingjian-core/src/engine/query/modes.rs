@@ -27,6 +27,7 @@ impl Engine {
             typed_display: None,
             correction: None,
             aux: None,
+            held: String::new(),
             timings: Timings {
                 parse: Duration::ZERO,
                 lookup: Duration::ZERO,
@@ -57,6 +58,7 @@ impl Engine {
             typed_display: None,
             correction: None,
             aux: None,
+            held: String::new(),
             timings: Timings {
                 parse: Duration::ZERO,
                 lookup: Duration::ZERO,
@@ -103,6 +105,7 @@ impl Engine {
             typed_display: None,
             correction: None,
             aux: None,
+            held: String::new(),
             timings: Timings {
                 parse: Duration::ZERO,
                 lookup: Duration::ZERO,
@@ -161,6 +164,7 @@ impl Engine {
             typed_display: None,
             correction: None,
             aux: None,
+            held: String::new(),
             timings: Timings {
                 parse: start.elapsed(),
                 lookup: Duration::ZERO,

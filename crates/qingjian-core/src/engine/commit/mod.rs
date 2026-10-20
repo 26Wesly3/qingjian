@@ -78,17 +78,20 @@ impl Engine {
             last.chars = text.chars().count();
             last.tail = text.chars().last();
         }
-        Some(text)
+        Some(self.take_held() + &text)
     }
 
-    /// 候选比输入短时（`kaifazhe` 选了 开发），剩余拼音留在缓冲区，壳应接着 [`Self::query`]。
+    /// 候选比输入短时（`kaifazhe` 选了 开发），剩余拼音留在缓冲区，壳应接着 [`Self::query`]；
+    /// 这时选的词先留在组句里、返回空串，整段选完时连同前面留着的一起返回（见 [`Self::take_held`]）。
     /// 候选的最后一个音节比输入长时（`kaif` 选了 开发），把输入吃完。
     /// 开了自动空格（[`Self::set_auto_space`]）时与上文、候选内部的中西文交界都补好空格。
     pub fn commit(&mut self, candidate: &Candidate) -> String {
         self.panel = None;
         let lead = self.auto_space_before(&candidate.text);
+        let before = self.hold_selections.then(|| self.composition.clone());
         let text = self.commit_with(candidate, InputSource::from(candidate.kind), None);
-        if lead { format!(" {text}") } else { text }
+        let text = if lead { format!(" {text}") } else { text };
+        self.hold_or_release(before, text)
     }
 
     /// [`Self::commit`] 的内部形式：`source` 写进输入日志（上屏译词时不是候选本身），

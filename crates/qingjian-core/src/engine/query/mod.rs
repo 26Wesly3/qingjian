@@ -46,6 +46,7 @@ impl Engine {
             }
         };
         query.aux = self.aux_segment();
+        query.held = self.held_text();
         // 辅码态只出命中码的词：自定义短语没有码，不出
         if self.aux_filter().is_none() {
             self.insert_custom_phrases(&mut query.candidates.items);

@@ -144,6 +144,9 @@ pub struct GeneralConfig {
     /// 缺省关（展开成全拼音节）；常在双拼中打英文词或需要核对按键的人可打开。
     pub shuangpin_raw_preedit: bool,
 
+    /// 一段拼音分几次选完时，先选的词留在输入框里、整段选完才一起上屏，退格先撤回选择。缺省开；关掉是选了就上屏。
+    pub hold_selections: bool,
+
     /// 双拼键位提示：在候选窗旁画出当前方案的键位，敲了声母后标出能接的韵母键。见 [`KeyHintMode`]。
     pub key_hint: KeyHintMode,
 
@@ -228,6 +231,7 @@ impl Default for GeneralConfig {
             aux_code_keep_empty: true,
             scheme: String::new(),
             shuangpin_raw_preedit: false,
+            hold_selections: true,
             key_hint: KeyHintMode::default(),
             key_hint_opacity: DEFAULT_KEY_HINT_OPACITY,
             key_hint_size: 100,

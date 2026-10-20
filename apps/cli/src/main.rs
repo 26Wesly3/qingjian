@@ -205,6 +205,8 @@ fn build_engine(args: &Args) -> Result<Engine, CliError> {
     let mut engine = Engine::new(dictionary)
         .with_translator(Box::new(glossary))
         .with_learner(Box::new(learner));
+    // 回放按日志逐键重喂：日志里选词之后的退格删的是字母，不是撤回选择
+    engine.set_hold_selections(false);
     if !args.extra_dict.is_empty() {
         let mut extras = Vec::new();
         for path in &args.extra_dict {

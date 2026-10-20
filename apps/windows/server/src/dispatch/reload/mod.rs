@@ -242,6 +242,8 @@ impl Router {
         self.engine.set_auto_space(config.general.auto_space);
         self.engine
             .set_shuangpin_raw_preedit(config.general.shuangpin_raw_preedit);
+        self.engine
+            .set_hold_selections(config.general.hold_selections);
         let previous = self.config.render_settings();
         let grid_keys = self.config.grid_keys();
         let next = RouterConfig::from(config);

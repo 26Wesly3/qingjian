@@ -26,7 +26,7 @@ impl QingjianInputController {
                 if host::with(|h| h.engine.english_mode()).unwrap_or(false) {
                     self.commit_raw(client);
                 } else {
-                    self.commit_highlighted(client);
+                    self.commit_highlighted_then(client);
                 }
             }
             return false;
@@ -247,7 +247,7 @@ impl QingjianInputController {
                 }
                 // 其他字符：把当前高亮候选上屏，再按非组句状态处理这个字符
                 _ => {
-                    self.commit_highlighted(client);
+                    self.commit_highlighted_then(client);
                 }
             }
         }

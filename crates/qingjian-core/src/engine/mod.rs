@@ -13,6 +13,7 @@ mod correcting;
 mod decoded;
 mod extras;
 mod gloss;
+mod held;
 mod input_log;
 mod key_hint;
 mod learning;
@@ -195,6 +196,12 @@ pub struct Engine {
 
     /// 这段组句里第一次退格前的缓冲区：上屏时与最终键串不同就记一条 `retype`。
     retype_snapshot: Option<String>,
+
+    /// 前面选好、还没交给应用的词（见 `held` 模块）。
+    held: Vec<held::HeldSelection>,
+
+    /// 选词后剩下拼音时先不上屏（[`Self::set_hold_selections`]，缺省开）。
+    hold_selections: bool,
 
     /// 组句外直通给应用的字符，攒到下一次上屏或上文断开时写成一条 `passthrough`。
     passthrough_pending: String,
@@ -447,6 +454,8 @@ impl Engine {
             log_sequence: 0,
             last_rescored: std::cell::Cell::new(false),
             retype_snapshot: None,
+            held: Vec::new(),
+            hold_selections: true,
             passthrough_pending: String::new(),
             page_turns: 0,
             composition_started: None,
