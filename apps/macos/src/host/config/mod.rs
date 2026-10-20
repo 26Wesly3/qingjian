@@ -53,6 +53,11 @@ impl Host {
         self.english_candidates = config.general.english_candidates;
         self.apps = config.apps.clone();
         self.window.set_appearance(config.general.appearance());
+        self.key_hint_mode = config.general.key_hint;
+        self.window
+            .set_key_hint_opacity(config.general.key_hint_opacity());
+        self.window
+            .set_key_hint_size(config.general.key_hint_size());
         self.window.set_layout(config.general.layout);
         if self.layout != config.general.layout
             || self.horizontal_grid != config.general.horizontal_grid

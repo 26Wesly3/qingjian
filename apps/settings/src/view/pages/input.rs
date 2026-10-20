@@ -2,8 +2,10 @@
 
 use bamboo_slip::taffy::LengthPercentage;
 use bamboo_slip::taffy::{Dimension, FlexDirection, FlexWrap, NodeId, Rect, Size, Style};
-use bamboo_slip::{Checkbox, RenderError, SettingRow, Switch, Ui, Visual, group, section_title};
-use qingjian_platform::Scheme;
+use bamboo_slip::{
+    Checkbox, RenderError, SettingRow, Slider, Switch, Ui, Visual, group, section_title,
+};
+use qingjian_platform::{KeyHintMode, Scheme, code_schemes};
 
 use super::shortcuts;
 use crate::library::Kind;
@@ -107,6 +109,11 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
             rows.push(code_rule(ui, page, "顶字", "top", entry.top)?);
         }
     }
+    // 字根图只有 86 五笔有
+    let roots = general.code().as_deref() == Some(code_schemes::WUBI86);
+    if (scheme.is_shuangpin() || roots) && Feature::KeyHint.here() {
+        rows.extend(key_hint(ui, page)?);
+    }
     out.push(section_title(ui, theme, "方案")?);
     out.push(group(ui, theme, &rows)?);
 
@@ -120,6 +127,66 @@ pub fn input(ui: &mut Ui<Message>, page: &Page) -> Result<Vec<NodeId>, RenderErr
         out.extend(aux_code(ui, page)?);
     }
     Ok(out)
+}
+
+/// 键位提示（双拼键位、五笔字根图）：什么时候弹出、键盘大小、窗口透明度（关着时后两项不能调）。
+fn key_hint(ui: &mut Ui<Message>, page: &Page) -> Result<[NodeId; 3], RenderError> {
+    let theme = &page.theme;
+    let general = &page.settings.config.general;
+    let names: Vec<&str> = KeyHintMode::ALL.iter().map(|mode| mode.label()).collect();
+    let control = select(
+        ui,
+        page,
+        Popup::KeyHint,
+        (general.key_hint.label(), &names),
+        120.0,
+        false,
+    )?;
+    let mode = SettingRow::new("键位提示")
+        .info("候选窗口旁显示键盘：双拼敲了声母后标出能接的韵母键，五笔显示字根图")
+        .control(control)
+        .build(ui, theme)?;
+    let off = general.key_hint == KeyHintMode::Off;
+    let size = percent_slider(
+        ui,
+        page,
+        ("键位提示大小", "key_hint_size"),
+        general.key_hint_size(),
+        (60.0, 150.0),
+        off,
+    )?;
+    let opacity = percent_slider(
+        ui,
+        page,
+        ("键位提示透明度", "key_hint_opacity"),
+        general.key_hint_opacity(),
+        (30.0, 100.0),
+        off,
+    )?;
+    Ok([mode, size, opacity])
+}
+
+/// 一行百分比滑块，步长 5%：`ratio` 是当前倍数（1 为 100%），拖到的值按整数百分比写进 `[general]`。
+fn percent_slider(
+    ui: &mut Ui<Message>,
+    page: &Page,
+    (title, key): (&str, &'static str),
+    ratio: f32,
+    (min, max): (f32, f32),
+    disabled: bool,
+) -> Result<NodeId, RenderError> {
+    let percent = (ratio * 100.0).round();
+    let text = format!("{percent:.0}%");
+    let slider = Slider::new(percent, min, max)
+        .step(5.0)
+        .label(&text)
+        .disabled(disabled)
+        .build(ui, &page.theme, key, move |value| {
+            Message::set("general", key, value.round() as i64)
+        })?;
+    SettingRow::new(title)
+        .control(slider)
+        .build(ui, &page.theme)
 }
 
 /// 辅码：开关、显示、触发键，再一组码表（随包的、导入的、导入按钮）。

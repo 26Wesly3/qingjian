@@ -23,6 +23,12 @@ const LINKS: &[(PageId, &str, &str, &str)] = &[
         "双拼",
     ),
     (PageId::Input, "形码", "input/fuzzy-and-shuangpin", "形码"),
+    (
+        PageId::Input,
+        "键位提示",
+        "input/fuzzy-and-shuangpin",
+        "键位提示",
+    ),
     (PageId::Input, "启用", "input/aux-code", "用法"),
     (PageId::Input, "触发键", "input/aux-code", "触发键"),
     (PageId::Input, "导入码表", "input/aux-code", "码表"),

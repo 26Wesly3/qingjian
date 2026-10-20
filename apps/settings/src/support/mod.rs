@@ -36,11 +36,13 @@ pub enum Feature {
     CloudRequestControls,
     /// 上屏的整句翻译后记进生词本（随释义兜底）。
     VocabularyTranslation,
+    /// 双拼键位提示：候选窗旁画键盘。
+    KeyHint,
 }
 
 impl Feature {
     #[cfg(test)]
-    pub const ALL: [Self; 16] = [
+    pub const ALL: [Self; 17] = [
         Self::AuxCode,
         Self::Schemes,
         Self::SwitchKeys,
@@ -57,6 +59,7 @@ impl Feature {
         Self::ApiUsage,
         Self::CloudRequestControls,
         Self::VocabularyTranslation,
+        Self::KeyHint,
     ];
 
     /// 当前平台显示这一项。
@@ -100,6 +103,7 @@ impl Feature {
             Self::CloudRequestControls => [Todo, Yes, Todo],
             // Linux 还没接释义兜底
             Self::VocabularyTranslation => [Yes, Yes, Todo],
+            Self::KeyHint => [Yes, Todo, Todo],
         }
     }
 
@@ -123,6 +127,7 @@ impl Feature {
             Self::ApiUsage => "云服务用量统计",
             Self::CloudRequestControls => "按需云联想与请求节奏",
             Self::VocabularyTranslation => "生词本整句翻译",
+            Self::KeyHint => "双拼键位提示",
         }
     }
 
@@ -151,6 +156,7 @@ impl Feature {
                 (PageId::Shortcuts, "按需 AI 联想"),
             ],
             Self::VocabularyTranslation => &[(PageId::Cloud, "生词本整句翻译")],
+            Self::KeyHint => &[(PageId::Input, "键位提示")],
             Self::EnglishPunctuation | Self::StatusBar | Self::HorizontalGrid | Self::ApiUsage => {
                 &[]
             }
