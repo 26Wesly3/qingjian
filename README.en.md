@@ -38,7 +38,7 @@ The macOS and Windows builds are still in beta. After installing, select Qingjia
 3  架构        architecture
 ```
 
-Only one learning language is shown beside the candidates. You can choose English, Japanese or Spanish today, or turn the gloss off. Qingjian also supports sentence input, abbreviated pinyin, spelling correction, double pinyin, Wubi and more; a local sentence model revises sentence candidates once you pause.
+Only one learning language is shown beside the candidates. You can choose English, Japanese, Spanish, Vietnamese or German today, or turn the gloss off. Qingjian also supports sentence input, abbreviated pinyin, spelling correction, double pinyin, Wubi and more; a local sentence model revises sentence candidates once you pause.
 
 The Statistics page also shows today's, last-seven-day and lifetime input volume, and the vocabulary records for the language you are learning. For details see [Input](https://qingjian.app/docs/input), [Glosses and new words](https://qingjian.app/docs/learning/translation), [Local statistics](https://qingjian.app/docs/learning/statistics) and [Keys and shortcuts](https://qingjian.app/docs/getting-started/keys).
 
@@ -55,3 +55,14 @@ The optional **cloud prediction is off by default**. Once it is on, Qingjian sen
 - Want to contribute? Start from the [developer docs](docs/) and the [contributing guide](docs/contributing.md).
 
 Qingjian is free through the [official channel](https://qingjian.app/download). The code is licensed under [GPL-3.0-or-later](LICENSE); the project name and logo are not covered by the code license. Bundled data has its own sources and licenses — see the [data provenance list](docs/design/landscape.md).
+
+## Star History
+
+<p align="center">
+  <a href="https://www.star-history.com/#qingjian-team/qingjian&Date">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=qingjian-team/qingjian&type=Date&theme=dark">
+      <img src="https://api.star-history.com/svg?repos=qingjian-team/qingjian&type=Date" alt="Qingjian GitHub star history" width="600">
+    </picture>
+  </a>
+</p>
