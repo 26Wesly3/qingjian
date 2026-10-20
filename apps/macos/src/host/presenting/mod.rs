@@ -39,7 +39,7 @@ impl Host {
             result: None,
         });
         self.reset_session(None, vec![cloud_candidate("翻译中…".to_owned())]);
-        self.await_prediction();
+        self.await_prediction(None);
         self.render();
     }
 

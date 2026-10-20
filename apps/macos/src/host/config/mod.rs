@@ -42,9 +42,12 @@ impl Host {
         self.translation_keys = config.shortcut.translation_keys();
         self.delete_keys = config.shortcut.delete_keys();
         self.translate_keys = config.shortcut.translate_selection;
+        self.punctuation_keys = config.shortcut.toggle_punctuation;
+        self.predict_keys = config.shortcut.predict;
         self.page_size = config.general.page_size();
         self.cloud_slots = config.predict.slots;
         self.page_keys = config.general.page_keys();
+        self.extra_page_keys = config.shortcut.extra_page_keys;
         self.highlight_keys = config.shortcut.highlight_keys;
         self.punct_commits = config.general.punct_commits;
         self.preedit_mode = config.general.preedit;
