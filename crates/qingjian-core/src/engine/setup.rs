@@ -14,9 +14,11 @@ use crate::engine::decoded::EngineDecoded;
 use crate::fuzzy::FuzzyRules;
 use crate::history::InputHistory;
 use crate::sentence::{Interpolation, LanguageModel, Personal, SentenceScorer};
-use crate::shuangpin::Scheme;
+use crate::shuangpin::{Layout, Scheme};
 use crate::traditional::{Traditional, TraditionalVariant};
 use qingjian_dictionary::{AuxCodeLookup, CodeTable, Dictionary, WordList};
+
+use crate::code_scheme::CodeScheme;
 use std::sync::Arc;
 
 impl Engine {
@@ -32,14 +34,19 @@ impl Engine {
         Ok(())
     }
 
-    /// 设双拼方案，`None` 回到全拼。纠错缓存按作用域记而作用域的含义变了，一并清掉。
+    /// 设内置双拼方案，`None` 回到全拼。
     pub fn set_shuangpin(&mut self, scheme: Option<Scheme>) {
-        self.shuangpin = scheme;
+        self.set_shuangpin_layout(scheme.map(|scheme| Arc::new(scheme.layout().clone())));
+    }
+
+    /// 设双拼键位（内置或用户方案），`None` 回到全拼。纠错缓存按作用域记而作用域的含义变了，一并清掉。
+    pub fn set_shuangpin_layout(&mut self, layout: Option<Arc<Layout>>) {
+        self.shuangpin = layout;
         *self.correction_cache.borrow_mut() = None;
     }
 
-    pub fn shuangpin(&self) -> Option<Scheme> {
-        self.shuangpin
+    pub fn shuangpin(&self) -> Option<&Layout> {
+        self.shuangpin.as_deref()
     }
     /// 换双拼 preedit 显示形式：开着时显示原始按键（如 `ljse`），关着（缺省）展开成全拼（`lan'se`）。
     pub fn set_shuangpin_raw_preedit(&mut self, enabled: bool) {
@@ -122,15 +129,28 @@ impl Engine {
         self.traditional.variant()
     }
 
-    /// 换形码码表（五笔），`None` 回到拼音的诸方案。编码与拼音是两套键，纠错缓存一并清掉。
-    pub fn set_code_table(&mut self, table: Option<CodeTable>) {
-        self.code = table;
+    /// 换形码方案，`None` 回到拼音的诸方案。编码与拼音是两套键，纠错缓存一并清掉。
+    pub fn set_code_scheme(&mut self, scheme: Option<CodeScheme>) {
+        self.code = scheme;
         *self.correction_cache.borrow_mut() = None;
         self.forget_span_cache();
     }
 
+    /// 只改当前形码方案的按键规则，不换码表；没装形码时什么也不做。
+    pub fn set_code_rules(&mut self, auto_commit: bool, top: bool) {
+        if let Some(code) = &mut self.code {
+            code.auto_commit = auto_commit;
+            code.top = top;
+        }
+    }
+
     /// 当前的形码码表；`None` 表示走拼音（全拼 / 双拼 / 注音）。
     pub fn code_table(&self) -> Option<&CodeTable> {
+        self.code.as_ref().map(|scheme| &scheme.table)
+    }
+
+    /// 当前的形码方案。
+    pub fn code_scheme(&self) -> Option<&CodeScheme> {
         self.code.as_ref()
     }
 
@@ -140,7 +160,7 @@ impl Engine {
     }
 
     /// 拼音侧参不参与查询。形码开着时把它关掉就是「只用形码」（`[general] scheme = "none"`）；
-    /// 两边都开是混输，见 [`Self::set_code_table`] 与 [`Self::query_mixed`]。
+    /// 两边都开是混输，见 [`Self::set_code_scheme`] 与 [`Self::query_mixed`]。
     pub fn set_phonetic(&mut self, on: bool) {
         self.phonetic = on;
         *self.correction_cache.borrow_mut() = None;
@@ -176,8 +196,9 @@ impl Engine {
             .modes()
             .question_body(self.composition.scope(), self.zhuyin);
         self.shuangpin
-            .filter(|scheme| scheme.uses_semicolon())
-            .is_some_and(|scheme| scheme.decode_fuzzy(body, self.fuzzy).pending_initial())
+            .as_deref()
+            .filter(|layout| layout.uses_semicolon())
+            .is_some_and(|layout| layout.decode_fuzzy(body, self.fuzzy).pending_initial())
     }
 
     /// 只用形码：码表挂着、拼音侧关着。
@@ -222,7 +243,8 @@ impl Engine {
             Some(EngineDecoded::Zhuyin(crate::zhuyin::decode(keys)))
         } else {
             self.shuangpin
-                .map(|scheme| EngineDecoded::Shuangpin(scheme.decode_fuzzy(keys, self.fuzzy)))
+                .as_deref()
+                .map(|layout| EngineDecoded::Shuangpin(layout.decode_fuzzy(keys, self.fuzzy)))
         }
     }
 

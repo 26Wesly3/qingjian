@@ -4,7 +4,6 @@
 mod sink;
 
 use qingjian_platform::protocol::{Frame, ScreenRect, SessionId};
-use qingjian_platform::scheme_name;
 use qingjian_render::Mode;
 
 pub use self::sink::{CandidateSink, NoopSink, RenderSettings};
@@ -41,7 +40,7 @@ impl Router {
             english: self.english,
             traditional: self.config.traditional,
             full_width: self.full_width_for(self.english),
-            scheme: scheme_name(self.config.scheme, self.config.wubi),
+            scheme: self.scheme_name(),
         }
     }
 

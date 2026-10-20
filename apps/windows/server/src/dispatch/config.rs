@@ -121,9 +121,6 @@ pub struct RouterConfig {
     /// 拼音侧方案（`[general] scheme`）。
     pub scheme: Scheme,
 
-    /// 形码侧开没开（`[general] wubi`）。与拼音同时开着就是混输。
-    pub wubi: bool,
-
     /// 繁体输出（`[general] traditional_variant`），给候选窗口主题显示简 / 繁。
     pub traditional: bool,
 
@@ -206,7 +203,6 @@ impl From<&Config> for RouterConfig {
             status_enabled: config.status_bar.enabled,
             status_pos: config.status_bar.x.zip(config.status_bar.y),
             scheme: config.general.scheme(),
-            wubi: config.general.wubi(),
             traditional: config.general.traditional() != TraditionalVariant::Off,
             aux_code_key: config.general.aux_code_key(),
             aux_code_show: config.general.aux_code_show,

@@ -4,7 +4,6 @@
 //! 本地整句模型在 [`rescore`]，形码码表在 [`code`]，符号面板在 [`panel`]。
 
 mod candidates;
-mod code;
 mod composed;
 mod config;
 mod key;
@@ -13,6 +12,7 @@ mod mode;
 mod panel;
 mod reload;
 mod rescore;
+mod schemes;
 mod session;
 mod status;
 mod translate;
@@ -22,14 +22,13 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use qingjian_core::{Engine, Grid};
-use qingjian_platform::LocalModelConfig;
 use qingjian_platform::protocol::{
     ClientMessage, Frame, IndicatorState, InputSettings, ScreenRect, ServerMessage, SessionId,
 };
+use qingjian_platform::{LocalModelConfig, SchemeSlot};
 use qingjian_render::Mode;
 
 pub use self::candidates::{CandidateSink, NoopSink, RenderSettings};
-pub use self::code::find_code_table;
 use self::composed::Composed;
 pub use self::config::RouterConfig;
 use self::panel::PanelGrid;
@@ -38,6 +37,7 @@ use self::reload::ConfigReload;
 pub use self::reload::{DataDirs, attach_cloud};
 pub use self::rescore::find_model;
 use self::rescore::{ModelLoader, RescoreState};
+pub use self::schemes::find_bundled_schemes;
 use self::session::SessionInfo;
 pub use self::status::{NoopStatusSink, StatusEvent, StatusSink, StatusView};
 use self::translate::Translation;
@@ -129,8 +129,11 @@ pub struct Router {
     /// 本地整句模型（`.qjm` 或三件套目录）；没有模型文件为 `None`。
     model_path: Option<PathBuf>,
 
-    /// 形码码表（`wubi/wubi86.tsv`，启动时找好的，见 [`code::find_code_table`]）；没有为 `None`。
-    code_table: Option<PathBuf>,
+    /// 随包的方案目录（启动时找好的，见 [`schemes::find_bundled_schemes`]）；没有为 `None`。
+    bundled_schemes: Option<PathBuf>,
+
+    /// 装着的形码方案（名字给状态条与主题显示），配置没动它时不重读码表。
+    scheme_slot: SchemeSlot,
 
     /// 进行中的模型加载；加载完接到 Engine 上就清掉。
     model_loader: Option<ModelLoader>,
@@ -180,7 +183,8 @@ impl Router {
             panel: None,
             last_panel: None,
             model_path: None,
-            code_table: None,
+            bundled_schemes: None,
+            scheme_slot: SchemeSlot::default(),
             model_loader: None,
             applied_model: LocalModelConfig::default(),
             surrounding_before: String::new(),

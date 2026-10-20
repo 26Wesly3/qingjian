@@ -4,7 +4,7 @@ use super::diagnostics::{copy_to_pasteboard, open_with_system};
 use super::*;
 use crate::preferences::DEFAULT_FONT_LABEL;
 use qingjian_core::TraditionalVariant;
-use qingjian_platform::{FontSize, ShiftLetter};
+use qingjian_platform::{FontSize, ShiftLetter, code_schemes};
 
 impl Host {
     /// 写短语前读取文件；外部规则有变化时同步列表并请用户重新确认。
@@ -440,8 +440,11 @@ impl Host {
             }
             // 五笔：勾上就是 86 版，取消就是关。与上面的拼音方案同时开着就是混输。
             (Setting::Wubi, SettingValue::Bool(on)) => {
-                self.settings
-                    .set_value("general", "wubi", if on { "wubi86" } else { "" });
+                self.settings.set_value(
+                    "general",
+                    "code",
+                    if on { code_schemes::WUBI86 } else { "off" },
+                );
             }
             // 弹出菜单按 TraditionalVariant::ALL 的顺序，第 0 项是简体
             (Setting::Traditional, SettingValue::Index(index)) => {

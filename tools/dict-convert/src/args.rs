@@ -61,9 +61,27 @@ pub enum Command {
         #[arg(long, default_value = "assets/lexicon/dict.tsv", num_args = 1..)]
         frequency: Vec<PathBuf>,
 
-        /// 输出文件名（写在 --out-dir 下）
-        #[arg(long, default_value = "wubi86.tsv")]
+        /// 输出文件名（写在 --out-dir 下）；缺省是形码方案目录里码表的缺省名
+        #[arg(long, default_value = "table.tsv")]
         name: String,
+    },
+
+    /// 五笔字根图的字形：字根表（`assets/schemes/wubi86/roots86.tsv`）+ 思源黑体 → SVG 路径表（写在 --out-dir 下）
+    WubiRoots {
+        /// 思源黑体 SC Regular（`SourceHanSansSC-Regular.otf`，不进仓库）
+        font: PathBuf,
+
+        /// 字根表
+        #[arg(long, default_value = "assets/schemes/wubi86/roots86.tsv")]
+        spec: PathBuf,
+
+        /// 输出文件名
+        #[arg(long, default_value = "roots86-glyphs.tsv")]
+        name: String,
+
+        /// 把还没挑笔画（`?`）的部件画成一张笔画编号图（PNG）
+        #[arg(long)]
+        sheet: Option<PathBuf>,
     },
 
     /// CC-CEDICT `cedict_ts.u8` → glossary-en.tsv

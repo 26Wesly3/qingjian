@@ -5,6 +5,7 @@
 //! 判断标准：换掉 IMK 换成 TSF，不应该需要改这里的任何一行。
 
 pub mod candidate;
+pub mod code_scheme;
 pub mod composition;
 pub mod correction;
 pub mod custom_phrase;
@@ -17,6 +18,7 @@ pub mod panel;
 pub mod parser;
 pub mod punctuation;
 pub mod ranking;
+pub mod root_chart;
 pub mod sentence;
 pub mod shortcut;
 pub mod shuangpin;
@@ -31,6 +33,7 @@ pub use candidate::{
     Candidate, CandidateKind, CandidateLayout, CandidateList, Cell, GRID_ROWS, Grid, Language,
     MAX_CELL_EMS, PartOfSpeech, Sense, Translation,
 };
+pub use code_scheme::CodeScheme;
 pub use composition::Composition;
 pub use correction::Correction;
 pub use emoji::EmojiTable;
@@ -50,5 +53,5 @@ pub use panel::{PANEL_COLUMNS, PanelGroup, PanelSection, SymbolPanel};
 pub use parser::{ParseError, Segmentation};
 pub use punctuation::Punctuation;
 pub use qingjian_dictionary as dictionary;
-pub use shuangpin::Scheme as ShuangpinScheme;
+pub use shuangpin::{Layout as ShuangpinLayout, Scheme as ShuangpinScheme};
 pub use traditional::{Traditional, TraditionalVariant};
