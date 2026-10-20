@@ -18,6 +18,9 @@ use crate::theme::{TextSizes, Theme};
 /// 第二、三排相对第一排右移几个键宽，与常见键盘的错位一致。
 const ROW_OFFSETS: [f32; 3] = [0.0, 0.3, 0.8];
 
+/// 用户设的大小为 100% 时键盘再放大的倍数：主题里的尺寸按这个倍数画出来才看得清（真机试下来 1.3 合适）。
+const BASE_ZOOM: f32 = 1.3;
+
 /// 键内文字离键边的距离（点）。
 pub(super) const INSET: f32 = 4.0;
 
@@ -61,7 +64,7 @@ pub(super) struct Paint {
 }
 
 impl Renderer {
-    /// 画键位提示键盘。整块跟着候选字的比例缩放，再乘 `zoom`（用户设的大小，1 为原大）。
+    /// 画键位提示键盘。整块跟着候选字的比例缩放，再乘 [`BASE_ZOOM`] 与 `zoom`（用户设的大小，1 为原大）。
     /// 位图仍按 `scale` 标记，壳换回点时放大的部分留在点数里。
     pub fn render_keyboard(
         &mut self,
@@ -71,7 +74,7 @@ impl Renderer {
         zoom: f32,
     ) -> Result<Rendered, RenderError> {
         let screen_scale = scale;
-        let scale = scale * theme.candidate_scale() * zoom;
+        let scale = scale * theme.candidate_scale() * BASE_ZOOM * zoom;
         let theme = &theme.with_text_sizes(TextSizes::default());
         self.stage.text().use_families(theme.families());
         let spec = &theme.file().keyboard;
