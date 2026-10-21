@@ -92,14 +92,7 @@ impl CodeTable {
                 frequency,
             });
         }
-        entries.sort_by(|a, b| {
-            a.code
-                .cmp(&b.code)
-                .then_with(|| b.frequency.cmp(&a.frequency))
-                .then_with(|| a.text.cmp(&b.text))
-        });
-        // 同一个词记了两遍（不同码表版本合并）留词频高的那条，排完序就是靠前的那条
-        entries.dedup_by(|a, b| a.code == b.code && a.text == b.text);
+        sort_and_dedup(&mut entries);
         let total_frequency = entries.iter().map(|e| u64::from(e.frequency)).sum();
         let full_code_len = most_common_len(&entries);
         if untypable > 0 {
@@ -115,6 +108,16 @@ impl CodeTable {
 
     pub fn from_path(path: impl AsRef<Path>) -> Result<Self, DictionaryError> {
         Self::parse(&std::fs::read_to_string(path)?)
+    }
+
+    /// 把用户的形码词库并进来。满码长度仍按原表算：几条自造词不该改掉方案的码长。
+    pub fn merge(&mut self, other: CodeTable) {
+        if self.entries.is_empty() {
+            self.full_code_len = other.full_code_len;
+        }
+        self.entries.extend(other.entries);
+        sort_and_dedup(&mut self.entries);
+        self.total_frequency = self.entries.iter().map(|e| u64::from(e.frequency)).sum();
     }
 
     /// 编码正好等于输入，或输入是它的前缀的词，最多 `limit` 条。
@@ -170,6 +173,17 @@ impl CodeTable {
     pub fn is_empty(&self) -> bool {
         self.entries.is_empty()
     }
+}
+
+/// 按 `(编码, 词频降序)` 排好；同一个词记了两遍（不同码表版本合并、自造词与原表重了）留词频高的那条，排完序就是靠前的那条。
+fn sort_and_dedup(entries: &mut Vec<Entry>) {
+    entries.sort_by(|a, b| {
+        a.code
+            .cmp(&b.code)
+            .then_with(|| b.frequency.cmp(&a.frequency))
+            .then_with(|| a.text.cmp(&b.text))
+    });
+    entries.dedup_by(|a, b| a.code == b.code && a.text == b.text);
 }
 
 /// 最常见的编码长度，一样多时取长的。
@@ -238,6 +252,17 @@ mod tests {
         let table = CodeTable::parse("开发\tgant\t900\n开发\tgant\t3000\n").unwrap();
         assert_eq!(table.len(), 1);
         assert_eq!(table.lookup("gant", 10)[0].frequency, 3000);
+    }
+
+    #[test]
+    fn merges_user_words_into_the_table() {
+        let mut table = CodeTable::parse("一\tggll\t100000\n开发\tgant\t900\n").unwrap();
+        table.merge(CodeTable::parse("青简\tgetu\t1\n开发\tgant\t5\n小青\tihge\t1\n").unwrap());
+        assert_eq!(table.len(), 4);
+        assert_eq!(table.lookup("getu", 10)[0].text, "青简");
+        assert_eq!(table.lookup("gant", 10)[0].frequency, 900);
+        assert_eq!(table.total_frequency(), 100000 + 900 + 1 + 1);
+        assert_eq!(table.full_code_len(), 4);
     }
 
     #[test]
