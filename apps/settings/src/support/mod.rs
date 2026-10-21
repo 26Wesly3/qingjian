@@ -16,8 +16,10 @@ pub enum Feature {
     AuxCode,
     /// 形码，以及用户目录 `schemes/` 里的形码与双拼方案。
     Schemes,
-    /// 中英文切换键（含 Windows 系统的 Ctrl + Space）。
+    /// 中英文切换键。
     SwitchKeys,
+    /// 切换键里的「Ctrl + Space（系统）」：改的是 Windows 的系统热键。
+    SystemCtrlSpace,
     DefaultEnglish,
     RememberModePerApp,
     /// 英文模式的全半角标点。
@@ -42,10 +44,11 @@ pub enum Feature {
 
 impl Feature {
     #[cfg(test)]
-    pub const ALL: [Self; 17] = [
+    pub const ALL: [Self; 18] = [
         Self::AuxCode,
         Self::Schemes,
         Self::SwitchKeys,
+        Self::SystemCtrlSpace,
         Self::DefaultEnglish,
         Self::RememberModePerApp,
         Self::EnglishPunctuation,
@@ -82,9 +85,10 @@ impl Feature {
         match self {
             Self::AuxCode => [Yes, Yes, Todo],
             Self::Schemes => [Yes, Yes, Todo],
-            // macOS 用 Caps Lock，由系统决定；Linux 的切换键在 Fcitx5 的设置里
-            Self::SwitchKeys => [No, Yes, No],
-            Self::DefaultEnglish => [Todo, Yes, Todo],
+            // macOS 用 Caps Lock，由系统决定
+            Self::SwitchKeys => [No, Yes, Yes],
+            Self::SystemCtrlSpace => [No, Yes, No],
+            Self::DefaultEnglish => [Todo, Yes, Yes],
             Self::RememberModePerApp => [Todo, Yes, Todo],
             // macOS 英文模式一律半角
             Self::EnglishPunctuation => [No, Yes, Yes],
@@ -114,6 +118,7 @@ impl Feature {
             Self::AuxCode => "辅码",
             Self::Schemes => "形码与自定义方案",
             Self::SwitchKeys => "中英文切换键",
+            Self::SystemCtrlSpace => "系统的 Ctrl + Space",
             Self::DefaultEnglish => "默认英文模式",
             Self::RememberModePerApp => "按应用记住中英模式",
             Self::EnglishPunctuation => "英文标点全半角",
@@ -157,9 +162,11 @@ impl Feature {
             ],
             Self::VocabularyTranslation => &[(PageId::Cloud, "生词本整句翻译")],
             Self::KeyHint => &[(PageId::Input, "键位提示")],
-            Self::EnglishPunctuation | Self::StatusBar | Self::HorizontalGrid | Self::ApiUsage => {
-                &[]
-            }
+            Self::SystemCtrlSpace
+            | Self::EnglishPunctuation
+            | Self::StatusBar
+            | Self::HorizontalGrid
+            | Self::ApiUsage => &[],
         }
     }
 }
