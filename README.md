@@ -66,3 +66,12 @@ macOS 与 Windows 版本仍处于测试阶段。安装后先选中青简，在�
     </picture>
   </a>
 </p>
+
+---
+
+## 藏文适配（本 fork 附加）
+
+本 fork 在 [`tibetan/`](tibetan/README.md) 下附带了一套藏文输入适配包：打中文拼音时，
+候选下方显示“藏文 + 威利转写”，并在「学习语言」里增加“藏文”选项。
+不改青简源码，走用户词库、个人释义表、学习选择与候选窗字体这些扩展点。
+详见 [tibetan/README.md](tibetan/README.md) 与 [TIBETAN.md](TIBETAN.md)。

@@ -1,0 +1,6 @@
+﻿dist/
+backup/
+__pycache__/
+*.pyc
+sources/*
+!sources/README.md
